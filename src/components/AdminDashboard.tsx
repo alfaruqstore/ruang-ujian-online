@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from "react";
+import * as mammoth from "mammoth";
 import { ExamPackage, Question, SubExamConfig, APP_THEMES } from "../types";
 import { 
   initSheetsAuth, 
@@ -178,6 +179,7 @@ export default function AdminDashboard({
 
   const [isManualSubExamActive, setIsManualSubExamActive] = useState(false);
   const [manualSubExamText, setManualSubExamText] = useState("");
+  const [instructionTab, setInstructionTab] = useState<"word" | "csv" | "text">("word");
 
   // Success / error labels
   const [successMsg, setSuccessMsg] = useState("");
@@ -1367,6 +1369,11 @@ JAWABAN : D`
     setExplanation("");
   };
 
+  const handleDeleteParsedQuestion = (indexToDelete: number) => {
+    setBulkParsedQuestions(prev => prev.filter((_, idx) => idx !== indexToDelete));
+    setSuccessMsg("Pilihan butir soal pratinjau berhasil dihapus sebelum disimpan.");
+  };
+
   const handleParseBulk = () => {
     setErrorMsg("");
     setSuccessMsg("");
@@ -1391,51 +1398,69 @@ JAWABAN : D`
         let ans: "A" | "B" | "C" | "D" | "E" = "A";
         let expl = "";
         let parsingQuestionText = true;
+        let parsingExplanation = false;
 
         for (let line of lines) {
           if (/^\d+\.\s+/.test(line)) {
             qText = line.replace(/^\d+\.\s+/, "");
             parsingQuestionText = true;
+            parsingExplanation = false;
           } else if (/^A\.\s+/i.test(line)) {
             optA = line.replace(/^A\.\s+/i, "");
             parsingQuestionText = false;
+            parsingExplanation = false;
           } else if (/^B\.\s+/i.test(line)) {
             optB = line.replace(/^B\.\s+/i, "");
             parsingQuestionText = false;
+            parsingExplanation = false;
           } else if (/^C\.\s+/i.test(line)) {
             optC = line.replace(/^C\.\s+/i, "");
             parsingQuestionText = false;
+            parsingExplanation = false;
           } else if (/^D\.\s+/i.test(line)) {
             optD = line.replace(/^D\.\s+/i, "");
             parsingQuestionText = false;
+            parsingExplanation = false;
           } else if (/^E\.\s+/i.test(line)) {
             optE = line.replace(/^E\.\s+/i, "");
             parsingQuestionText = false;
+            parsingExplanation = false;
           } else if (/^JAWABAN\s*:\s*([A-E])/i.test(line)) {
             const match = line.match(/^JAWABAN\s*:\s*([A-E])/i);
             if (match) ans = match[1].toUpperCase() as any;
             parsingQuestionText = false;
+            parsingExplanation = false;
           } else if (/^Pembahasan\s*:\s*/i.test(line)) {
             expl = line.replace(/^Pembahasan\s*:\s*/i, "");
             parsingQuestionText = false;
+            parsingExplanation = true;
           } else {
-            if (parsingQuestionText) qText += "\n" + line;
-            else if (expl) expl += "\n" + line;
+            if (parsingQuestionText) {
+              qText += (qText ? "\n" : "") + line;
+            } else if (parsingExplanation) {
+              expl += (expl ? "\n" : "") + line;
+            }
           }
         }
 
         const finalExamId = isManualExamActive ? manualExamId.trim() : selectedExamId;
         const finalSubExamName = isManualSubExamActive ? manualSubExamText.trim() : selectedSubExam;
 
-        if (qText && optA && optB && optC && optD && optE) {
+        if (qText && optA && optB && optC && optD) {
           qs.push({
             id,
             examId: finalExamId,
             subExamName: finalSubExamName || "Umum",
             questionText: qText,
-            options: { A: optA, B: optB, C: optC, D: optD, E: optE },
+            options: { 
+              A: optA, 
+              B: optB, 
+              C: optC, 
+              D: optD, 
+              E: optE || "-" 
+            },
             correctOption: ans,
-            explanation: expl || "Sesuai petunjuk manual jawaban.",
+            explanation: expl.trim() || "Sesuai petunjuk manual jawaban.",
             isPublished: false // Saved in Question Bank, unpublished by default
           });
         }
@@ -1481,6 +1506,94 @@ JAWABAN : D`
     setSuccessMsg(`Sukses menambahkan ${bulkParsedQuestions.length} soal massal baru ke Bank Soal (Draf)! Silakan terbitkan di tab 'Paket Ujian'.`);
     setBulkParsedQuestions([]);
     setBulkText("");
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setErrorMsg("");
+    setSuccessMsg("");
+
+    const fileType = file.name.split('.').pop()?.toLowerCase();
+    
+    if (fileType === 'docx') {
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        try {
+          const arrayBuffer = evt.target?.result as ArrayBuffer;
+          const result = await mammoth.extractRawText({ arrayBuffer });
+          if (!result.value.trim()) {
+            throw new Error("Konten file Word kosong atau tidak dapat diekstrak.");
+          }
+          setBulkText(result.value);
+          setSuccessMsg(`Berhasil membaca file Word (.docx): "${file.name}"! Silakan klik 'Proses Penguraian Teks' di bawah.`);
+        } catch (err: any) {
+          setErrorMsg(`Gagal memproses file Word: ${err.message}`);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    } else if (fileType === 'csv') {
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        try {
+          const text = evt.target?.result as string;
+          const lines = text.split('\n').map(line => {
+            return line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim());
+          }).filter(line => line.length > 0 && line[0] !== "");
+
+          if (lines.length < 1) {
+            throw new Error("File CSV kosong.");
+          }
+
+          let formatted = "";
+          let startIndex = 0;
+          
+          const isHeader = lines[0].some(cell => 
+            /soal|pertanyaan|question|opsi|jawaban|correct|pembahasan|explanation/i.test(cell)
+          );
+          if (isHeader) {
+            startIndex = 1;
+          }
+
+          let qCount = 1;
+          for (let i = startIndex; i < lines.length; i++) {
+            const row = lines[i];
+            if (row.length < 5) continue; // Must have question + options
+            const qStr = row[0];
+            const a = row[1] || "";
+            const b = row[2] || "";
+            const c = row[3] || "";
+            const d = row[4] || "";
+            const eOpt = row[5] || "";
+            const correct = (row[6] || "A").toUpperCase();
+            const pbh = row[7] || "";
+
+            formatted += `${qCount}. ${qStr}\nA. ${a}\nB. ${b}\nC. ${c}\nD. ${d}\nE. ${eOpt}\nJAWABAN : ${correct}\nPembahasan:\n${pbh}\n\n`;
+            qCount++;
+          }
+
+          if (formatted.trim() === "") {
+            throw new Error("Tidak menemukan baris data soal yang valid di file CSV.");
+          }
+
+          setBulkText(formatted.trim());
+          setSuccessMsg(`Berhasil mengonversi CSV "${file.name}" menjadi format standar teks (${qCount - 1} soal).`);
+        } catch (err: any) {
+          setErrorMsg(`Gagal membaca file CSV: ${err.message}`);
+        }
+      };
+      reader.readAsText(file);
+    } else {
+      // Treat as standard raw text (.txt/etc)
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        const text = evt.target?.result as string;
+        setBulkText(text);
+        setSuccessMsg(`Berhasil memuat file teks "${file.name}"! Silakan klik 'Proses Penguraian Teks' di bawah.`);
+      };
+      reader.readAsText(file);
+    }
   };
 
   // AI-Powered Question Generator caller
@@ -2391,14 +2504,36 @@ JAWABAN : D`
                       </div>
                     </div>
 
+                    {/* FILE DRAG/DROP & SELECT PANEL */}
+                    <div className="bg-slate-50 border border-dashed border-slate-300 rounded-xl p-4 text-center space-y-2 mt-4">
+                      <div className="mx-auto w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-[#0F4C81]">
+                        <i className="fa-solid fa-file-arrow-up text-lg"></i>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="cursor-pointer inline-flex items-center gap-1.5 bg-[#0F4C81] hover:bg-[#0c3e6a] text-white text-[11px] font-bold px-3 py-1.5 rounded-lg transition-colors shadow-sm">
+                          <i className="fa-solid fa-cloud-arrow-up"></i>
+                          <span>Unggah File Soal</span>
+                          <input
+                            type="file"
+                            accept=".docx,.csv,.txt"
+                            onChange={handleFileUpload}
+                            className="hidden"
+                          />
+                        </label>
+                        <p className="text-[10px] text-slate-550">
+                          Mendukung berkas Word (<span className="font-semibold text-slate-700">.docx</span>), Excel/CSV (<span className="font-semibold text-slate-700">.csv</span>), atau Dokumen Teks (<span className="font-semibold text-slate-700">.txt</span>).
+                        </p>
+                      </div>
+                    </div>
+
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Area Teks Salinan</label>
                       <textarea
                         value={bulkText}
                         onChange={(e) => setBulkText(e.target.value)}
                         rows={10}
-                        className="block w-full rounded-lg border border-slate-300 bg-slate-900 text-emerald-400 font-mono text-xs p-4 leading-relaxed"
-                        placeholder="Tempel dokumen anda disini..."
+                        className="block w-full rounded-lg border border-slate-300 bg-slate-900 text-emerald-400 font-mono text-xs p-4 leading-relaxed focus:ring-1 focus:ring-indigo-500"
+                        placeholder="Tempel dokumen anda disini atau gunakan tombol unggah berkas..."
                       />
                     </div>
 
@@ -2407,6 +2542,7 @@ JAWABAN : D`
                         onClick={handleParseBulk}
                         className="bg-[#0F4C81] hover:bg-[#0c3e6a] text-white font-extrabold text-xs py-3 px-5 rounded-lg border-b border-b-indigo-900 shadow transition-all cursor-pointer"
                       >
+                        <i className="fa-solid fa-wand-magic-sparkles mr-1.5"></i>
                         Proses Penguraian Teks
                       </button>
 
@@ -2415,31 +2551,142 @@ JAWABAN : D`
                           onClick={saveBulkImport}
                           className="bg-[#2ECC71] hover:bg-emerald-600 text-white font-extrabold text-xs py-3 px-6 rounded-lg border-b border-b-emerald-800 shadow transition-all cursor-pointer"
                         >
+                          <i className="fa-solid fa-floppy-disk mr-1.5"></i>
                           Simpan {bulkParsedQuestions.length} Soal Ke DB
                         </button>
                       )}
                     </div>
                   </div>
 
-                  {/* Instruction Right */}
-                  <div className="lg:col-span-5 bg-orange-50 border border-orange-200 rounded-xl p-5 space-y-4">
+                  {/* Instruction Right with Interactive Tabs */}
+                  <div className="lg:col-span-5 bg-gradient-to-br from-orange-50/80 to-amber-50/40 border border-orange-200 rounded-xl p-5 space-y-4">
                     <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5 border-b border-orange-200 pb-2">
-                      <i className="fa-solid fa-circle-info text-[#F58220]"></i> Panduan Format Impor Teks
+                      <i className="fa-solid fa-circle-info text-[#F58220]"></i> Panduan Format & Berkas
                     </h4>
-                    <p className="text-[11px] text-slate-650 leading-relaxed font-sans">
-                      Format penulisan wajib konsisten agar sistem pengurai pintar admin tidak menghasilkan kegagalan:
-                    </p>
-                    <div className="bg-white p-3.5 rounded border border-orange-300 text-[10px] text-slate-700 font-mono">
-                      <p className="text-indigo-600 font-bold">// STANDARD TEMPLATE:</p>
-                      <p>1. Ibukota Indonesia yang ditetapkan di Pulau Kalimantan adalah...</p>
-                      <p>A. Palangkaraya</p>
-                      <p>B. Nusantara</p>
-                      <p>C. Samarinda</p>
-                      <p>D. Balikpapan</p>
-                      <p>E. Pontianak</p>
-                      <p className="font-extrabold">JAWABAN : B</p>
-                      <p className="text-slate-400">Pembahasan: Presiden meresmikan kota Nusantara sebagai IKN.</p>
+                    
+                    {/* Segment Tab Selector */}
+                    <div className="grid grid-cols-3 gap-1 bg-white p-1 rounded-xl border border-orange-200">
+                      <button
+                        type="button"
+                        onClick={() => setInstructionTab("word")}
+                        className={`py-1.5 px-1 rounded-lg text-[10px] font-bold text-center transition-all cursor-pointer ${
+                          instructionTab === "word" ? "bg-orange-105 bg-orange-100 text-orange-900 shadow-sm font-black" : "text-slate-500 hover:bg-slate-50"
+                        }`}
+                      >
+                        <i className="fa-solid fa-file-word mr-1"></i>
+                        Word (.docx)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setInstructionTab("csv")}
+                        className={`py-1.5 px-1 rounded-lg text-[10px] font-bold text-center transition-all cursor-pointer ${
+                          instructionTab === "csv" ? "bg-emerald-100 text-emerald-950 shadow-sm font-black" : "text-slate-500 hover:bg-slate-50"
+                        }`}
+                      >
+                        <i className="fa-solid fa-file-csv mr-1"></i>
+                        Excel / CSV
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setInstructionTab("text")}
+                        className={`py-1.5 px-1 rounded-lg text-[10px] font-bold text-center transition-all cursor-pointer ${
+                          instructionTab === "text" ? "bg-slate-200 text-slate-900 shadow-sm font-black" : "text-slate-500 hover:bg-slate-50"
+                        }`}
+                      >
+                        <i className="fa-solid fa-file-lines mr-1"></i>
+                        Teks Salinan
+                      </button>
                     </div>
+
+                    {instructionTab === "word" && (
+                      <div className="space-y-3 font-sans text-left animate-fade-in text-[11px] text-slate-650 leading-relaxed">
+                        <p className="font-semibold text-slate-800">
+                          💼 <span className="underline">Pengunggahan Word (.docx)</span>:
+                        </p>
+                        <ul className="list-disc pl-4 space-y-1">
+                          <li>Sistem akan mengekstrak otomatis seluruh teks di dokumen Anda.</li>
+                          <li>Struktur penulisan wajib konsisten diawali dengan penomoran angka, misal: <span className="font-mono bg-white px-1 font-bold">1. </span></li>
+                          <li>Tulis tanda kunci jawaban dengan <span className="font-mono font-bold bg-white px-1">JAWABAN : [Opsi]</span>.</li>
+                          <li>Simpan pembahasan di bawah tag baris <span className="font-mono font-bold bg-white px-1">Pembahasan:</span>.</li>
+                        </ul>
+                        <div className="bg-white p-3 rounded border border-orange-200 text-[10px] text-slate-700 font-mono leading-normal whitespace-pre-wrap">
+<span className="text-indigo-650 font-bold">// FORMAT DI WORD DOCUMENT (.DOCX):</span>
+1. Ibukota Indonesia yang ditetapkan di Pulau Kalimantan adalah...
+A. Palangkaraya
+B. Nusantara
+C. Samarinda
+D. Balikpapan
+E. Pontianak
+
+JAWABAN : B
+
+Pembahasan:
+Presiden meresmikan kota Nusantara sebagai IKN baru Republik Indonesia.
+                        </div>
+                      </div>
+                    )}
+
+                    {instructionTab === "csv" && (
+                      <div className="space-y-3 font-sans text-left animate-fade-in text-[11px] text-slate-650 leading-relaxed">
+                        <p className="font-semibold text-slate-800">
+                          📊 <span className="underline">Panduan Format File Excel / CSV</span>:
+                        </p>
+                        <ul className="list-disc pl-4 space-y-1">
+                          <li>File wajib disimpan dengan akhiran ekstensi <span className="font-bold">.csv</span> (Comma Separated).</li>
+                          <li>Sediakan 8 kolom penting dengan urutan berikut:</li>
+                        </ul>
+                        <div className="bg-white p-2.5 rounded border border-orange-200 font-normal">
+                          <table className="w-full text-[9px] border-collapse border border-slate-200 font-mono">
+                            <thead>
+                              <tr className="bg-slate-100">
+                                <th className="border border-slate-200 p-0.5 font-bold">No</th>
+                                <th className="border border-slate-200 p-0.5 font-bold">Kolom</th>
+                                <th className="border border-slate-200 p-0.5 font-bold">Contoh Isian</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <td className="border border-slate-100 p-0.5 font-bold text-center">1</td>
+                                <td className="border border-slate-100 p-0.5">Pertanyaan</td>
+                                <td className="border border-slate-100 p-0.5">Hasil dari 5 x 5 adalah...</td>
+                              </tr>
+                              <tr>
+                                <td className="border border-slate-100 p-0.5 font-bold text-center">2-6</td>
+                                <td className="border border-slate-100 p-0.5">Opsi A s/d E</td>
+                                <td className="border border-slate-100 p-0.5">A: 10, B: 25, dst.</td>
+                              </tr>
+                              <tr>
+                                <td className="border border-slate-100 p-0.5 font-bold text-center">7</td>
+                                <td className="border border-slate-100 p-0.5">Jawaban</td>
+                                <td className="border border-slate-100 p-0.5">B</td>
+                              </tr>
+                              <tr>
+                                <td className="border border-slate-100 p-0.5 font-bold text-center">8</td>
+                                <td className="border border-slate-100 p-0.5">Pembahasan</td>
+                                <td className="border border-slate-100 p-0.5">Karena 5 kali 5 sama dengan 25.</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <p className="text-[10px] text-amber-700 font-medium italic">
+                          *Sistem akan auto-format isi spreadsheet menjadi format teks salinan siap parse di text area!
+                        </p>
+                      </div>
+                    )}
+
+                    {instructionTab === "text" && (
+                      <div className="space-y-3 font-sans text-left animate-fade-in text-[11px] text-slate-650 leading-relaxed">
+                        <p className="font-semibold text-slate-800">
+                          ✍️ <span className="underline">Format Salinan Teks Langsung</span>:
+                        </p>
+                        <ul className="list-disc pl-4 space-y-1">
+                          <li>Tempel teks salinan langsung di kolom sebelah kiri.</li>
+                          <li>Gunakan format penulisan bersih yang sejenis dengan contoh pengetikan di atas.</li>
+                          <li>Pastikan kunci jawaban <span className="font-mono font-bold text-indigo-700 bg-indigo-50 px-1">JAWABAN : [A-E]</span> tertera di setiap butir soal guna mendeteksi kunci otomatis.</li>
+                          <li>Pembahasan di bawah kata <span className="font-bold">Pembahasan:</span> akan diekstrak penuh tanpa tertinggal.</li>
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -2447,22 +2694,73 @@ JAWABAN : D`
               {/* Previews Table */}
               {bulkParsedQuestions.length > 0 && (
                 <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 shadow-inner">
-                  <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Pratinjau Hasil Parser ({bulkParsedQuestions.length} Soal)</h4>
-                  <div className="space-y-4 divide-y divide-slate-100 max-h-72 overflow-y-auto">
+                  <div className="flex justify-between items-center border-b border-slate-150 pb-3">
+                    <h4 className="text-xs font-bold text-[#0F4C81] uppercase tracking-widest pl-1">
+                      <i className="fa-solid fa-list-check text-blue-800 mr-2"></i>
+                      Pratinjau Hasil Parser ({bulkParsedQuestions.length} Soal Terdeteksi)
+                    </h4>
+                    <span className="text-[10px] font-bold text-slate-500 italic">Tinjau kunci &amp; penjelasan sebelum disimpan ke basis data</span>
+                  </div>
+                  
+                  <div className="space-y-6 divide-y divide-slate-200 max-h-120 overflow-y-auto pr-2">
                     {bulkParsedQuestions.map((q, idx) => (
-                      <div key={idx} className="bg-slate-50 p-4 rounded-xl border border-slate-200 pt-3">
-                        <span className="text-[10px] font-bold text-[#F58220] uppercase font-mono block mb-1">Butir {idx + 1}</span>
-                        <p className="text-xs font-bold text-slate-800 whitespace-pre-wrap">{q.questionText}</p>
-                        <div className="grid grid-cols-1 md:grid-cols-5 gap-2 mt-2.5 text-[10px] text-slate-600 font-sans">
-                          <span>A. {q.options.A}</span>
-                          <span>B. {q.options.B}</span>
-                          <span>C. {q.options.C}</span>
-                          <span>D. {q.options.D}</span>
-                          <span>E. {q.options.E}</span>
+                      <div key={idx} className="bg-slate-50 p-5 rounded-xl border border-slate-200 pt-4 space-y-3 relative group transition-all hover:border-slate-300">
+                        {/* Remove button inside the card header */}
+                        <div className="flex justify-between items-center">
+                          <span className="text-[10px] font-bold bg-indigo-50 text-[#0F4C81] px-2.5 py-0.5 rounded-full uppercase font-mono">
+                            Butir #{idx + 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteParsedQuestion(idx)}
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50 text-[10px] font-bold px-2.5 py-1 rounded-lg border border-red-200 flex items-center gap-1.5 transition-colors cursor-pointer"
+                            title="Hapus butir soal ini dari pratinjau"
+                          >
+                            <i className="fa-solid fa-trash-can text-xs"></i>
+                            <span>Hapus</span>
+                          </button>
                         </div>
-                        <p className="text-[10px] font-bold mt-2 pt-1 border-t border-slate-200 text-[#2ECC71]">
-                          KUNCI JAWABAN: {q.correctOption} | Analisis: {q.explanation}
-                        </p>
+
+                        <div>
+                          <p className="text-xs font-bold text-slate-800 whitespace-pre-wrap leading-relaxed">{q.questionText}</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-2 mt-2 pt-1 text-[11px] text-slate-600 font-sans">
+                          <div className="px-2.5 py-1.5 bg-white rounded-lg border border-slate-200">
+                            <span className="font-extrabold text-blue-900 font-mono">A.</span> {q.options.A}
+                          </div>
+                          <div className="px-2.5 py-1.5 bg-white rounded-lg border border-slate-200">
+                            <span className="font-extrabold text-blue-900 font-mono">B.</span> {q.options.B}
+                          </div>
+                          <div className="px-2.5 py-1.5 bg-white rounded-lg border border-slate-200">
+                            <span className="font-extrabold text-blue-900 font-mono">C.</span> {q.options.C}
+                          </div>
+                          <div className="px-2.5 py-1.5 bg-white rounded-lg border border-slate-200">
+                            <span className="font-extrabold text-blue-900 font-mono">D.</span> {q.options.D}
+                          </div>
+                          <div className="px-2.5 py-1.5 bg-white rounded-lg border border-slate-200">
+                            <span className="font-extrabold text-blue-900 font-mono">E.</span> {q.options.E}
+                          </div>
+                        </div>
+
+                        {/* Rich KUNCI & PEMBAHASAN PRATINJAU */}
+                        <div className="bg-amber-50/50 border border-amber-200 rounded-xl p-4.5 space-y-2 mt-3 text-left">
+                          <div className="flex items-center gap-1.5 text-xs font-black text-amber-850">
+                            <i className="fa-solid fa-lightbulb text-amber-600"></i>
+                            <span>Analisis &amp; Pembahasan Resmi</span>
+                          </div>
+                          
+                          <div className="text-xs font-extrabold text-emerald-700 flex items-center gap-1.5 font-sans">
+                            <span>KUNCI JAWABAN:</span>
+                            <span className="font-mono bg-emerald-100 text-emerald-800 text-xs px-2.5 py-0.5 rounded font-black border border-emerald-300">
+                              {q.correctOption}
+                            </span>
+                          </div>
+
+                          <div className="text-[11px] text-slate-700 leading-relaxed font-sans whitespace-pre-wrap border-t border-amber-250 border-dashed pt-2 mt-2">
+                            {q.explanation || "Tidak ada pembahasan yang terbaca."}
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
