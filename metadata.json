@@ -1,0 +1,6 @@
+{
+  "name": "Bimbel Kata Kita - Platform Tryout Online",
+  "description": "Platform tryout online berstandar nasional untuk persiapan ujian UTBK SNBT, Kedinasan, CPNS, TNI/Polri, BUMN, PPPK, Psikotes, TKA, Bahasa Inggris, dan Matematika.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
