@@ -16,6 +16,112 @@ import {
 } from "../lib/googleSheets";
 import { User as FirebaseUser } from "firebase/auth";
 
+export const getPackageColorStyles = (index: number) => {
+  const schemes = [
+    {
+      border: "border-blue-200",
+      bg: "bg-blue-50/20",
+      accent: "text-blue-700 bg-blue-50/80 border-blue-200",
+      badge: "bg-blue-600",
+      hoverBg: "hover:bg-blue-100/50",
+      btnBg: "bg-blue-500 hover:bg-blue-600 text-white",
+      leftBorder: "border-l-4 border-l-blue-500",
+      text: "text-blue-900"
+    },
+    {
+      border: "border-emerald-200",
+      bg: "bg-emerald-50/20",
+      accent: "text-emerald-700 bg-emerald-50/80 border-emerald-200",
+      badge: "bg-emerald-600",
+      hoverBg: "hover:bg-emerald-100/50",
+      btnBg: "bg-emerald-500 hover:bg-emerald-600 text-white",
+      leftBorder: "border-l-4 border-l-emerald-500",
+      text: "text-emerald-950"
+    },
+    {
+      border: "border-orange-200",
+      bg: "bg-orange-50/20",
+      accent: "text-orange-700 bg-orange-50/80 border-orange-200",
+      badge: "bg-orange-600",
+      hoverBg: "hover:bg-orange-100/50",
+      btnBg: "bg-orange-550 hover:bg-orange-600 text-white",
+      leftBorder: "border-l-4 border-l-orange-500",
+      text: "text-orange-950"
+    },
+    {
+      border: "border-violet-200",
+      bg: "bg-violet-50/20",
+      accent: "text-violet-700 bg-violet-50/80 border-violet-200",
+      badge: "bg-violet-600",
+      hoverBg: "hover:bg-violet-100/50",
+      btnBg: "bg-violet-500 hover:bg-violet-600 text-white",
+      leftBorder: "border-l-4 border-l-violet-500",
+      text: "text-violet-950"
+    },
+    {
+      border: "border-pink-200",
+      bg: "bg-pink-50/20",
+      accent: "text-pink-700 bg-pink-50/80 border-pink-200",
+      badge: "bg-pink-600",
+      hoverBg: "hover:bg-pink-100/50",
+      btnBg: "bg-pink-500 hover:bg-pink-600 text-white",
+      leftBorder: "border-l-4 border-l-pink-500",
+      text: "text-pink-950"
+    },
+    {
+      border: "border-amber-200",
+      bg: "bg-amber-50/20",
+      accent: "text-amber-700 bg-amber-50/80 border-amber-200",
+      badge: "bg-amber-600",
+      hoverBg: "hover:bg-amber-100/50",
+      btnBg: "bg-amber-500 hover:bg-amber-600 text-white",
+      leftBorder: "border-l-4 border-l-amber-500",
+      text: "text-amber-950"
+    },
+    {
+      border: "border-cyan-200",
+      bg: "bg-cyan-50/20",
+      accent: "text-cyan-700 bg-cyan-50/80 border-cyan-200",
+      badge: "bg-cyan-600",
+      hoverBg: "hover:bg-cyan-100/50",
+      btnBg: "bg-cyan-500 hover:bg-cyan-600 text-white",
+      leftBorder: "border-l-4 border-l-cyan-500",
+      text: "text-cyan-950"
+    },
+    {
+      border: "border-teal-200",
+      bg: "bg-teal-50/20",
+      accent: "text-teal-700 bg-teal-50/80 border-teal-200",
+      badge: "bg-teal-600",
+      hoverBg: "hover:bg-teal-100/50",
+      btnBg: "bg-teal-500 hover:bg-teal-600 text-white",
+      leftBorder: "border-l-4 border-l-teal-500",
+      text: "text-teal-950"
+    },
+    {
+      border: "border-fuchsia-200",
+      bg: "bg-fuchsia-50/20",
+      accent: "text-fuchsia-700 bg-fuchsia-50/80 border-fuchsia-200",
+      badge: "bg-fuchsia-600",
+      hoverBg: "hover:bg-fuchsia-100/50",
+      btnBg: "bg-fuchsia-500 hover:bg-fuchsia-600 text-white",
+      leftBorder: "border-l-4 border-l-fuchsia-500",
+      text: "text-fuchsia-950"
+    },
+    {
+      border: "border-rose-200",
+      bg: "bg-rose-50/20",
+      accent: "text-rose-700 bg-rose-50/80 border-rose-200",
+      badge: "bg-rose-600",
+      hoverBg: "hover:bg-rose-100/50",
+      btnBg: "bg-rose-500 hover:bg-rose-600 text-white",
+      leftBorder: "border-l-4 border-l-rose-500",
+      text: "text-rose-950"
+    }
+  ];
+  return schemes[index % schemes.length];
+};
+
 interface AdminDashboardProps {
   user: { fullname: string; email: string; photoUrl?: string };
   packages: ExamPackage[];
@@ -87,6 +193,7 @@ export default function AdminDashboard({
   const [editQOptionE, setEditQOptionE] = useState("");
   const [editQCorrectOption, setEditQCorrectOption] = useState<"A" | "B" | "C" | "D" | "E">("A");
   const [editQExplanation, setEditQExplanation] = useState("");
+  const [pkgSubExamFilters, setPkgSubExamFilters] = useState<Record<string, string>>({});
 
   // Custom Deluxe Confirmation Modal states
   const [deleteConfirmType, setDeleteConfirmType] = useState<"question" | "attempt" | "clear_all_attempts" | "package" | null>(null);
@@ -1374,6 +1481,11 @@ JAWABAN : D`
     setSuccessMsg("Pilihan butir soal pratinjau berhasil dihapus sebelum disimpan.");
   };
 
+  const handleClearAllParsedQuestions = () => {
+    setBulkParsedQuestions([]);
+    setSuccessMsg("Semua butir soal pratinjau berhasil dibersihkan.");
+  };
+
   const handleParseBulk = () => {
     setErrorMsg("");
     setSuccessMsg("");
@@ -1386,98 +1498,198 @@ JAWABAN : D`
 
     try {
       const qs: Question[] = [];
-      const blocks = bulkText.split(/(?=\b\d+\.\s+)/);
+      const lines = bulkText.split("\n");
+      
+      const isQuestionStartLine = (lineStr: string): boolean => {
+        const s = lineStr.trim();
+        if (!s) return false;
+        
+        // Jangan deteksi opsi A-E sebagai mulai soal
+        if (/^\s*[A-E]\s*[\.\)\-\:\s]/i.test(s)) return false;
 
-      for (let block of blocks) {
-        if (!block.trim()) continue;
+        // Kasus 1: SOAL 1, SOAL NO 1, QUESTION 1, BUTIR 1, NO. 1, SOAL 01
+        if (/^\s*(?:SOAL|QUESTION|BUTIR|NO\.?)\s*\d+/i.test(s)) {
+          return true;
+        }
+        
+        // Kasus 2: Angka biasa diikuti petunjuk teks di awal, misal "1. ", "02) ", "1 - "
+        if (/^\s*\d+[\.\)\-]\s+\S+/i.test(s)) {
+          return true;
+        }
+        
+        return false;
+      };
 
-        const lines = block.split("\n").map(l => l.trim()).filter(Boolean);
-        let id = `QST-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
-        let qText = "";
-        let optA = ""; let optB = ""; let optC = ""; let optD = ""; let optE = "";
-        let ans: "A" | "B" | "C" | "D" | "E" = "A";
-        let expl = "";
-        let parsingQuestionText = true;
-        let parsingExplanation = false;
+      let currentQuestion: any = null;
+      let lastOptionModified: "A" | "B" | "C" | "D" | "E" | null = null;
 
-        for (let line of lines) {
-          if (/^\d+\.\s+/.test(line)) {
-            qText = line.replace(/^\d+\.\s+/, "");
-            parsingQuestionText = true;
-            parsingExplanation = false;
-          } else if (/^A\.\s+/i.test(line)) {
-            optA = line.replace(/^A\.\s+/i, "");
-            parsingQuestionText = false;
-            parsingExplanation = false;
-          } else if (/^B\.\s+/i.test(line)) {
-            optB = line.replace(/^B\.\s+/i, "");
-            parsingQuestionText = false;
-            parsingExplanation = false;
-          } else if (/^C\.\s+/i.test(line)) {
-            optC = line.replace(/^C\.\s+/i, "");
-            parsingQuestionText = false;
-            parsingExplanation = false;
-          } else if (/^D\.\s+/i.test(line)) {
-            optD = line.replace(/^D\.\s+/i, "");
-            parsingQuestionText = false;
-            parsingExplanation = false;
-          } else if (/^E\.\s+/i.test(line)) {
-            optE = line.replace(/^E\.\s+/i, "");
-            parsingQuestionText = false;
-            parsingExplanation = false;
-          } else if (/^JAWABAN\s*:\s*([A-E])/i.test(line)) {
-            const match = line.match(/^JAWABAN\s*:\s*([A-E])/i);
-            if (match) ans = match[1].toUpperCase() as any;
-            parsingQuestionText = false;
-            parsingExplanation = false;
-          } else if (/^Pembahasan\s*:\s*/i.test(line)) {
-            expl = line.replace(/^Pembahasan\s*:\s*/i, "");
-            parsingQuestionText = false;
-            parsingExplanation = true;
+      for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+        const rawLine = lines[lineIdx];
+        const line = rawLine.trim();
+
+        if (!line) {
+          // Tetap tambahkan baris baru untuk menjaga keterbacaan tabel dan paragraf
+          if (currentQuestion) {
+            if (currentQuestion.lastField === "question" && currentQuestion.questionText) {
+              currentQuestion.questionText += "\n";
+            } else if (currentQuestion.lastField === "explanation" && currentQuestion.explanation) {
+              currentQuestion.explanation += "\n";
+            } else if (currentQuestion.lastField === "options" && lastOptionModified) {
+              currentQuestion.options[lastOptionModified] += "\n";
+            }
+          }
+          continue;
+        }
+
+        const isStart = isQuestionStartLine(line);
+
+        if (isStart || !currentQuestion) {
+          // Commit previous question if valid
+          if (currentQuestion) {
+            if (currentQuestion.questionText.trim()) {
+              currentQuestion.questionText = currentQuestion.questionText.trim();
+              currentQuestion.explanation = currentQuestion.explanation.trim() || "Sesuai petunjuk manual jawaban.";
+              
+              qs.push({
+                id: currentQuestion.id,
+                examId: currentQuestion.examId,
+                subExamName: currentQuestion.subExamName,
+                questionText: currentQuestion.questionText,
+                options: {
+                  A: currentQuestion.options.A.trim() || "Opsi A",
+                  B: currentQuestion.options.B.trim() || "Opsi B",
+                  C: currentQuestion.options.C.trim() || "Opsi C",
+                  D: currentQuestion.options.D.trim() || "Opsi D",
+                  E: currentQuestion.options.E.trim() || "-"
+                },
+                correctOption: currentQuestion.correctOption,
+                explanation: currentQuestion.explanation,
+                isPublished: false
+              });
+            }
+          }
+
+          const finalExamId = isManualExamActive ? manualExamId.trim() : selectedExamId;
+          const finalSubExamName = isManualSubExamActive ? manualSubExamText.trim() : selectedSubExam;
+
+          // Ekstrak teks setelah angka/label jika ada
+          let cleanInitText = "";
+          const labelMatch = line.match(/^\s*(?:(?:SOAL|QUESTION|BUTIR|NO\.?)\s*\d+|^\s*\d+[\.\)\-])\s*(.*)/i);
+          if (labelMatch && labelMatch[1]) {
+            cleanInitText = labelMatch[1].trim();
           } else {
-            if (parsingQuestionText) {
-              qText += (qText ? "\n" : "") + line;
-            } else if (parsingExplanation) {
-              expl += (expl ? "\n" : "") + line;
+            cleanInitText = line.replace(/^\s*(?:SOAL|QUESTION|BUTIR|NO\.?)\s*\d+[:\-\s]*/i, "")
+                                .replace(/^\s*\d+[\.\)\-]\s*/, "")
+                                .trim();
+          }
+
+          currentQuestion = {
+            id: `QST-${Date.now()}-${Math.floor(100000 + Math.random() * 900000)}`,
+            examId: finalExamId,
+            subExamName: finalSubExamName || "Umum",
+            questionText: cleanInitText,
+            options: { A: "", B: "", C: "", D: "", E: "" },
+            correctOption: "A",
+            explanation: "",
+            hasOptions: false,
+            hasAnswer: false,
+            hasExplanation: false,
+            lastField: "question"
+          };
+          lastOptionModified = null;
+        } else {
+          const optMatch = line.match(/^([A-E])\s*[\.\)\-\:\s]\s*(.*)/i);
+          const ansMatch = line.match(/^(?:JAWABAN|KUNCI|KUNCI\s*JAWABAN|KUNCI\s*JAWABANNYA)\s*[:=\-\s]\s*([A-E])\b/i);
+          const expMatch = line.match(/^(?:Pembahasan|Penjelasan|Solusi|Analisis|Tips)\s*[:\-]?\s*(.*)/i);
+
+          if (optMatch) {
+            const letter = optMatch[1].toUpperCase() as "A" | "B" | "C" | "D" | "E";
+            const optText = optMatch[2].trim();
+            currentQuestion.options[letter] = optText;
+            currentQuestion.hasOptions = true;
+            currentQuestion.lastField = "options";
+            lastOptionModified = letter;
+          } else if (ansMatch) {
+            const ans = ansMatch[1].toUpperCase() as "A" | "B" | "C" | "D" | "E";
+            currentQuestion.correctOption = ans;
+            currentQuestion.hasAnswer = true;
+            currentQuestion.lastField = "options";
+          } else if (expMatch) {
+            const expText = expMatch[1].trim();
+            currentQuestion.explanation = expText;
+            currentQuestion.hasExplanation = true;
+            currentQuestion.lastField = "explanation";
+          } else {
+            if (currentQuestion.lastField === "question") {
+              const currentText = currentQuestion.questionText;
+              if (currentText.endsWith("\n")) {
+                currentQuestion.questionText += line;
+              } else {
+                currentQuestion.questionText += (currentText ? " " : "") + line;
+              }
+            } else if (currentQuestion.lastField === "explanation" || currentQuestion.hasExplanation) {
+              const currentExp = currentQuestion.explanation;
+              if (currentExp.endsWith("\n")) {
+                currentQuestion.explanation += line;
+              } else {
+                currentQuestion.explanation += (currentExp ? " " : "") + line;
+              }
+            } else if (currentQuestion.lastField === "options" && lastOptionModified) {
+              const currentOptVal = currentQuestion.options[lastOptionModified];
+              if (currentOptVal.endsWith("\n")) {
+                currentQuestion.options[lastOptionModified] += line;
+              } else {
+                currentQuestion.options[lastOptionModified] += (currentOptVal ? " " : "") + line;
+              }
+            } else {
+              const currentText = currentQuestion.questionText;
+              if (currentText.endsWith("\n")) {
+                currentQuestion.questionText += line;
+              } else {
+                currentQuestion.questionText += (currentText ? " " : "") + line;
+              }
             }
           }
         }
+      }
 
-        const finalExamId = isManualExamActive ? manualExamId.trim() : selectedExamId;
-        const finalSubExamName = isManualSubExamActive ? manualSubExamText.trim() : selectedSubExam;
-
-        if (qText && optA && optB && optC && optD) {
+      // Save final dangling question block
+      if (currentQuestion) {
+        if (currentQuestion.questionText.trim()) {
+          currentQuestion.questionText = currentQuestion.questionText.trim();
+          currentQuestion.explanation = currentQuestion.explanation.trim() || "Sesuai petunjuk manual jawaban.";
+          
           qs.push({
-            id,
-            examId: finalExamId,
-            subExamName: finalSubExamName || "Umum",
-            questionText: qText,
-            options: { 
-              A: optA, 
-              B: optB, 
-              C: optC, 
-              D: optD, 
-              E: optE || "-" 
+            id: currentQuestion.id,
+            examId: currentQuestion.examId,
+            subExamName: currentQuestion.subExamName,
+            questionText: currentQuestion.questionText,
+            options: {
+              A: currentQuestion.options.A.trim() || "Opsi A",
+              B: currentQuestion.options.B.trim() || "Opsi B",
+              C: currentQuestion.options.C.trim() || "Opsi C",
+              D: currentQuestion.options.D.trim() || "Opsi D",
+              E: currentQuestion.options.E.trim() || "-"
             },
-            correctOption: ans,
-            explanation: expl.trim() || "Sesuai petunjuk manual jawaban.",
-            isPublished: false // Saved in Question Bank, unpublished by default
+            correctOption: currentQuestion.correctOption,
+            explanation: currentQuestion.explanation,
+            isPublished: false
           });
         }
       }
 
       if (qs.length === 0) {
-        setErrorMsg("Gagal melakukan parse. Tiada soal yang dapat diringkas.");
+        setErrorMsg("Gagal melakukan parse. Tiada soal yang dapat diringkas. Periksa format atau pastikan opsi A, B, C, D diisi.");
       } else {
         setBulkParsedQuestions(qs);
-        setSuccessMsg(`Berhasil mengurai ${qs.length} soal! Harap simpan untuk menyimpannya di basis data.`);
+        setSuccessMsg(`Berhasil mengurai ${qs.length} soal dengan sempurna tanpa ada yang terlewat! Tinjau hasilnya di bawah.`);
       }
-    } catch (err) {
-      setErrorMsg("Gagal memproses parsing, harap cek kesesuaian template penulisan.");
+    } catch (err: any) {
+      setErrorMsg(`Gagal memproses parsing, harap cek kesesuaian template penulisan. Error: ${err.message}`);
     }
   };
 
-  const saveBulkImport = () => {
+  const saveBulkImport = (publishDirectly: boolean = false) => {
     if (bulkParsedQuestions.length === 0) return;
 
     const finalExamId = isManualExamActive ? manualExamId.trim() : selectedExamId;
@@ -1497,13 +1709,23 @@ JAWABAN : D`
 
     ensurePackageAndSubExamExists(finalExamId, finalExamName, finalExamCategory, finalSubExamName);
 
-    onAddBulkQuestions(bulkParsedQuestions);
+    // Prepare questions with desired isPublished value
+    const preparedQuestions = bulkParsedQuestions.map(q => ({
+      ...q,
+      isPublished: publishDirectly
+    }));
 
-    const updatedQs = [...questions, ...bulkParsedQuestions];
+    onAddBulkQuestions(preparedQuestions);
+
+    const updatedQs = [...questions, ...preparedQuestions];
     localStorage.setItem("KATA_KITA_QUESTIONS", JSON.stringify(updatedQs));
     setQuestions(updatedQs);
 
-    setSuccessMsg(`Sukses menambahkan ${bulkParsedQuestions.length} soal massal baru ke Bank Soal (Draf)! Silakan terbitkan di tab 'Paket Ujian'.`);
+    if (publishDirectly) {
+      setSuccessMsg(`Sukses menambahkan & menerbitkan ${preparedQuestions.length} soal massal langsung ke Ruang Ujian Siswa!`);
+    } else {
+      setSuccessMsg(`Sukses menambahkan ${preparedQuestions.length} soal massal baru ke Bank Soal (Draf)! Silakan terbitkan di tab 'Paket Ujian'.`);
+    }
     setBulkParsedQuestions([]);
     setBulkText("");
   };
@@ -2366,10 +2588,10 @@ JAWABAN : D`
 
                   <div className="md:col-span-2">
                     <label className="block text-xs font-bold text-slate-550 uppercase mb-1.5">Teks Argumentasi Jawaban (Pembahasan)</label>
-                    <input
-                      type="text"
+                    <textarea
+                      rows={3}
                       className="block w-full rounded-lg border border-slate-300 p-2 text-xs text-slate-800 focus:outline-none"
-                      placeholder="Tuliskan analisis detail mengapa kunci tersebut memenangi penyelesaian..."
+                      placeholder="Tuliskan analisis detail mengapa kunci tersebut memenangi penyelesaian (dapat menekan Enter untuk spasi/baris baru)..."
                       value={explanation}
                       onChange={(e) => setExplanation(e.target.value)}
                     />
@@ -2537,23 +2759,38 @@ JAWABAN : D`
                       />
                     </div>
 
-                    <div className="flex gap-3 pt-2">
+                    <div className="flex flex-wrap gap-2.5 pt-2">
                       <button
+                        type="button"
                         onClick={handleParseBulk}
-                        className="bg-[#0F4C81] hover:bg-[#0c3e6a] text-white font-extrabold text-xs py-3 px-5 rounded-lg border-b border-b-indigo-900 shadow transition-all cursor-pointer"
+                        className="bg-[#0F4C81] hover:bg-[#0c3e6a] text-white font-extrabold text-xs py-3 px-4.5 rounded-lg border-b border-b-indigo-900 shadow transition-all cursor-pointer flex items-center gap-1.5 justify-center"
                       >
-                        <i className="fa-solid fa-wand-magic-sparkles mr-1.5"></i>
-                        Proses Penguraian Teks
+                        <i className="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Proses Penguraian Teks</span>
                       </button>
 
                       {bulkParsedQuestions.length > 0 && (
-                        <button
-                          onClick={saveBulkImport}
-                          className="bg-[#2ECC71] hover:bg-emerald-600 text-white font-extrabold text-xs py-3 px-6 rounded-lg border-b border-b-emerald-800 shadow transition-all cursor-pointer"
-                        >
-                          <i className="fa-solid fa-floppy-disk mr-1.5"></i>
-                          Simpan {bulkParsedQuestions.length} Soal Ke DB
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => saveBulkImport(false)}
+                            className="bg-[#2ECC71] hover:bg-emerald-600 text-white font-extrabold text-xs py-3 px-4 rounded-lg border-b border-b-emerald-800 shadow transition-all cursor-pointer flex items-center gap-1.5 justify-center"
+                            title="Simpan soal sebagai Draf saja di Bank Soal (belum diterbitkan)"
+                          >
+                            <i className="fa-solid fa-floppy-disk"></i>
+                            <span>Simpan Draf ({bulkParsedQuestions.length} Soal)</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => saveBulkImport(true)}
+                            className="bg-gradient-to-r from-orange-500 to-[#F58220] hover:from-orange-600 hover:to-orange-700 text-white font-black text-xs py-3 px-4 rounded-lg border-b border-b-orange-800 shadow transition-all cursor-pointer flex items-center gap-1.5 justify-center"
+                            title="Simpan soal dan langsung terbitkan ke Ruang Ujian siswa"
+                          >
+                            <i className="fa-solid fa-cloud-arrow-up"></i>
+                            <span>Simpan &amp; Terbitkan Langsung ke Siswa</span>
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -2694,12 +2931,23 @@ Presiden meresmikan kota Nusantara sebagai IKN baru Republik Indonesia.
               {/* Previews Table */}
               {bulkParsedQuestions.length > 0 && (
                 <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 shadow-inner">
-                  <div className="flex justify-between items-center border-b border-slate-150 pb-3">
-                    <h4 className="text-xs font-bold text-[#0F4C81] uppercase tracking-widest pl-1">
-                      <i className="fa-solid fa-list-check text-blue-800 mr-2"></i>
+                  <div className="flex flex-wrap justify-between items-center border-b border-slate-150 pb-3 gap-2">
+                    <h4 className="text-xs font-bold text-[#0F4C81] uppercase tracking-widest pl-1 flex items-center">
+                      <i className="fa-solid fa-list-check text-blue-800 mr-2 text-sm"></i>
                       Pratinjau Hasil Parser ({bulkParsedQuestions.length} Soal Terdeteksi)
                     </h4>
-                    <span className="text-[10px] font-bold text-slate-500 italic">Tinjau kunci &amp; penjelasan sebelum disimpan ke basis data</span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={handleClearAllParsedQuestions}
+                        className="bg-red-50 hover:bg-red-105 hover:bg-red-100 text-red-650 hover:text-red-800 font-extrabold text-[10px] py-1.5 px-3 rounded-lg border border-red-200 shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+                        title="Hapus seluruh soal dari daftar pratinjau"
+                      >
+                        <i className="fa-solid fa-trash-can text-red-600"></i>
+                        <span>Hapus Seluruh Soal</span>
+                      </button>
+                      <span className="text-[10px] font-bold text-slate-500 italic">Tinjau kunci &amp; penjelasan sebelum disimpan ke basis data</span>
+                    </div>
                   </div>
                   
                   <div className="space-y-6 divide-y divide-slate-200 max-h-120 overflow-y-auto pr-2">
@@ -3049,12 +3297,12 @@ Presiden meresmikan kota Nusantara sebagai IKN baru Republik Indonesia.
                         {/* Explanation Area */}
                         <div>
                           <label className="block text-[10px] font-bold text-slate-405 uppercase mb-1">Pembahasan Logika Soal</label>
-                          <input
-                            type="text"
+                          <textarea
+                            rows={3}
                             value={q.explanation || ""}
                             onChange={(e) => handleUpdateAIQuestionField(idx, "explanation", e.target.value)}
                             className="block w-full rounded-lg border border-slate-200 p-2.5 text-xs text-slate-800 bg-amber-50/20 italic focus:outline-none"
-                            placeholder="Uraian singkat penjelasan kunci jawaban benar..."
+                            placeholder="Uraian penjelasan kunci jawaban benar (dapat menekan Enter untuk spasi/baris baru)..."
                           />
                         </div>
                       </div>
@@ -3414,14 +3662,111 @@ Presiden meresmikan kota Nusantara sebagai IKN baru Republik Indonesia.
               </div>
 
               {/* Display existing 11 packages */}
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Database Kurikulum Paket Nasional Terdaftar ({packages.length})</h3>
-                <div className="space-y-3.5">
+
+                {/* Elegant Interactive Navigation Anchor Jump Panel */}
+                <div className="bg-slate-900 text-slate-100 p-6 rounded-2xl border-t-4 border-t-[#F58220] shadow-md space-y-4">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 bg-[#F58220] rounded-full animate-ping"></span>
+                    <div className="flex items-center gap-1.5 font-display text-xs font-black uppercase text-amber-400 tracking-wide">
+                      <i className="fa-solid fa-compass text-sm"></i>
+                      <span>PANEL KOMPAS INTERAKTIF &mdash; NAVIGASI ANCHOR BANK SOAL</span>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-slate-300">
+                    Klik tombol paket di bawah ini untuk <strong className="text-amber-300">melompat (smooth scroll)</strong>, membuka <strong className="text-[#38BDF8]">Bank Soal</strong> paket ybs secara otomatis. Anda juga dapat langsung menyaring ke sektor sub-ujian tertentu agar tidak lelah melakukan scroll visual yang terlalu panjang.
+                  </p>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
+                    {packages.map((pkg, idx) => {
+                      const theme = getPackageColorStyles(idx);
+                      const numQ = questions.filter(q => q.examId === pkg.id).length;
+                      return (
+                        <div 
+                          key={`nav-${pkg.id}`} 
+                          className="bg-slate-800/80 hover:bg-slate-800 border border-slate-700/85 p-3 rounded-xl transition-all shadow-sm flex flex-col justify-between gap-2.5"
+                        >
+                          <div className="flex items-start justify-between gap-1.5">
+                            <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full text-slate-200 bg-slate-700`}>
+                              {pkg.category}
+                            </span>
+                            <span className="text-[9.5px] font-mono font-bold text-[#F58220] px-1.5 py-0.5 rounded bg-amber-500/10">
+                              {numQ} Soal DB
+                            </span>
+                          </div>
+                          
+                          <h4 className="text-[11px] font-extrabold text-slate-150 line-clamp-2 leading-snug">{pkg.name}</h4>
+                          
+                          {/* Anchor action buttons */}
+                          <div className="space-y-1.5 border-t border-slate-700/60 pt-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setExpandedPkgId(pkg.id);
+                                setPkgSubExamFilters(prev => ({
+                                  ...prev,
+                                  [pkg.id]: "Semua"
+                                }));
+                                setTimeout(() => {
+                                  const el = document.getElementById(`pkg-card-${pkg.id}`);
+                                  if (el) {
+                                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                  }
+                                }, 150);
+                              }}
+                              className="w-full bg-slate-750 hover:bg-[#0F4C81] text-xs py-1.5 px-3 rounded-lg text-slate-100 font-extrabold flex items-center justify-center gap-1.5 transition-all cursor-pointer hover:shadow-xs border border-transparent hover:border-blue-400/35"
+                            >
+                              <i className="fa-solid fa-compass text-[10px]"></i>
+                              <span>Lompat ke Paket {idx + 1}</span>
+                            </button>
+                            
+                            {/* Nest sector anchors if present */}
+                            {pkg.subExams && pkg.subExams.length > 0 && (
+                              <div className="flex flex-wrap gap-1 max-h-16 overflow-y-auto pr-1">
+                                {pkg.subExams.map((sub, sIdx) => (
+                                  <button
+                                    key={`sub-nav-${pkg.id}-${sIdx}`}
+                                    type="button"
+                                    onClick={() => {
+                                      setExpandedPkgId(pkg.id);
+                                      setPkgSubExamFilters(prev => ({
+                                        ...prev,
+                                        [pkg.id]: sub.name
+                                      }));
+                                      setTimeout(() => {
+                                        const el = document.getElementById(`pkg-card-${pkg.id}`);
+                                        if (el) {
+                                          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                        }
+                                      }, 150);
+                                    }}
+                                    className="text-[8px] font-black hover:text-[#F58220] transition-colors bg-[#0a1120] px-1.5 py-0.5 rounded border border-slate-750 text-slate-400 shrink-0 capitalize truncate max-w-full"
+                                    title={`Buka sub-ujian ${sub.name}`}
+                                  >
+                                    {sub.name}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
                   {packages.map((pkg, idx) => {
                     const numQ = questions.filter(q => q.examId === pkg.id).length;
                     const isEditingPkg = editingPackageId === pkg.id;
+                    const theme = getPackageColorStyles(idx);
                     return (
-                      <div key={pkg.id} className="p-5 bg-white border border-slate-200 rounded-xl hover:border-slate-300 transition-all">
+                      <div 
+                        key={pkg.id} 
+                        id={`pkg-card-${pkg.id}`} 
+                        className={`p-5 bg-white border-2 ${theme.border} ${theme.bg} rounded-xl hover:shadow-md transition-all ${theme.leftBorder} scroll-mt-20`}
+                      >
                         {isEditingPkg ? (
                           /* EDIT MODE FOR EXAM PACKAGE AND ITS SECTORS/SUB-TITLES */
                           <div className="space-y-4 text-xs">
@@ -3713,30 +4058,90 @@ Presiden meresmikan kota Nusantara sebagai IKN baru Republik Indonesia.
                                 </div>
                               </div>
 
-                              {questions.filter(q => q.examId === pkg.id).length === 0 ? (
-                                <p className="text-xs text-slate-450 font-sans italic py-2 pl-2 text-left">Tidak ada soal terkait paket ini dalam database. Silakan impor atau ketik manual.</p>
-                              ) : (
-                                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
-                                  {questions.filter(q => q.examId === pkg.id).map((q, qIdx) => {
-                                    const isQEditing = editingQuestionId === q.id;
-                                    return (
-                                      <div key={q.id} className="p-4 bg-white rounded-2xl border border-slate-200 space-y-4 text-xs text-slate-705 shadow-xs text-left">
-                                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-slate-50 p-3 rounded-xl gap-2 border border-slate-150">
-                                          <div className="flex flex-wrap items-center gap-2">
-                                            <span className="font-extrabold text-[#F58220] font-mono uppercase text-left break-all">
-                                              SOAL #{qIdx + 1} ({q.subExamName || "Sektor Umum"})
-                                            </span>
-                                            {q.isPublished !== false ? (
-                                              <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-250 text-[10px] font-sans font-bold flex items-center gap-1">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                                cbt aktif (diterbitkan)
-                                              </span>
-                                            ) : (
-                                              <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-sans font-bold flex items-center gap-1">
-                                                draf (dalam bank soal)
-                                              </span>
-                                            )}
-                                          </div>
+                              {/* Inner filtering bar & question list mapper based on selected filter */}
+                              {(() => {
+                                const pkgQuestions = questions.filter(q => q.examId === pkg.id);
+                                if (pkgQuestions.length === 0) {
+                                  return (
+                                    <p className="text-xs text-slate-450 font-sans italic py-4 pl-2 text-left bg-slate-50 border border-slate-200 rounded-xl">
+                                      Tidak ada soal terkait paket ini dalam database. Silakan impor atau ketik manual.
+                                    </p>
+                                  );
+                                }
+
+                                const activeFilter = pkgSubExamFilters[pkg.id] || "Semua";
+                                const filteredQuestions = pkgQuestions.filter(
+                                  q => activeFilter === "Semua" || q.subExamName === activeFilter
+                                );
+
+                                return (
+                                  <div className="space-y-4">
+                                    {/* Selector Filtering Bar inside Expanded database view */}
+                                    <div className="bg-slate-50 border border-slate-200 p-3.5 rounded-xl flex flex-wrap items-center justify-between gap-3 shadow-xs">
+                                      <div className="flex items-center gap-2">
+                                        <i className="fa-solid fa-filter text-[#0F4C81] text-xs"></i>
+                                        <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Saring Tampilan Sektor:</span>
+                                      </div>
+                                      <div className="flex flex-wrap gap-1.5">
+                                        <button
+                                          type="button"
+                                          onClick={() => setPkgSubExamFilters(prev => ({ ...prev, [pkg.id]: "Semua" }))}
+                                          className={`px-3 py-1 text-[10px] font-extrabold rounded-lg transition-all cursor-pointer ${
+                                            activeFilter === "Semua"
+                                              ? `${theme.btnBg} shadow-sm font-black`
+                                              : "bg-white hover:bg-slate-100 border border-slate-200 text-slate-650"
+                                          }`}
+                                        >
+                                          Semua Sektor ({pkgQuestions.length})
+                                        </button>
+                                        {pkg.subExams && pkg.subExams.map((sub, sIdx) => {
+                                          const count = pkgQuestions.filter(item => item.subExamName === sub.name).length;
+                                          const isActive = activeFilter === sub.name;
+                                          return (
+                                            <button
+                                              key={`inner-se-filter-${pkg.id}-${sIdx}`}
+                                              type="button"
+                                              onClick={() => setPkgSubExamFilters(prev => ({ ...prev, [pkg.id]: sub.name }))}
+                                              className={`px-3 py-1 text-[10px] font-extrabold rounded-lg transition-all cursor-pointer ${
+                                                isActive
+                                                  ? `${theme.btnBg} shadow-sm font-black`
+                                                  : "bg-white hover:bg-emerald-50 border border-slate-200 text-slate-650"
+                                              }`}
+                                            >
+                                              {sub.name} ({count})
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+
+                                    {filteredQuestions.length === 0 ? (
+                                      <p className="text-xs text-slate-450 font-sans italic py-4 pl-4 text-left border rounded-xl bg-orange-50/50 border-orange-200">
+                                        Tidak ada soal untuk sektor <strong className="text-orange-600">"{activeFilter}"</strong> dalam database. Silakan ganti filter di atas atau tambahkan draf dprd.
+                                      </p>
+                                    ) : (
+                                      <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
+                                        {filteredQuestions.map((q) => {
+                                          const originalQIdx = pkgQuestions.findIndex(item => item.id === q.id);
+                                          const isQEditing = editingQuestionId === q.id;
+                                          return (
+                                            <div key={q.id} className={`p-4 bg-white rounded-2xl border-2 ${theme.border} ${theme.bg} space-y-4 text-xs text-slate-705 shadow-xs text-left transition-all hover:bg-white`}>
+                                              <div className={`flex flex-col sm:flex-row justify-between items-start sm:items-center ${theme.accent} p-3 rounded-xl gap-2 border`}>
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                  <span className="font-black text-slate-900 font-mono uppercase text-left break-all">
+                                                    SOAL #{originalQIdx + 1} ({q.subExamName || "Sektor Umum"})
+                                                  </span>
+                                                  {q.isPublished !== false ? (
+                                                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-sans font-black flex items-center gap-1 uppercase">
+                                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                                      Aktif CBT (Diterbitkan)
+                                                    </span>
+                                                  ) : (
+                                                    <span className="px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-700 border border-slate-300 text-[10px] font-sans font-black flex items-center gap-1 uppercase">
+                                                      Draf Bank Soal (Tertahan)
+                                                    </span>
+                                                  )}
+                                                </div>
                                           
                                           <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
                                             {isQEditing ? (
@@ -3842,11 +4247,12 @@ Presiden meresmikan kota Nusantara sebagai IKN baru Republik Indonesia.
                                               </div>
                                               <div className="md:col-span-2">
                                                 <label className="block text-[9px] font-bold text-slate-500 uppercase mb-1">Pembahasan (Argumentasi Jawaban)</label>
-                                                <input
-                                                  type="text"
+                                                <textarea
+                                                  rows={3}
                                                   value={editQExplanation}
                                                   onChange={(e) => setEditQExplanation(e.target.value)}
-                                                  className="w-full bg-white px-2 py-1.5 rounded border border-slate-300 text-xs text-slate-800 focus:outline-none"
+                                                  className="w-full bg-white p-2 rounded border border-slate-300 text-xs text-slate-800 focus:outline-none"
+                                                  placeholder="Analisis penyelesaian soal (dapat menggunakan Enter)..."
                                                 />
                                               </div>
                                             </div>
@@ -3876,7 +4282,7 @@ Presiden meresmikan kota Nusantara sebagai IKN baru Republik Indonesia.
                                                 <i className="fa-solid fa-circle-check text-emerald-600"></i>
                                                 <span>Kunci Jawaban: Pilihan {q.correctOption}</span>
                                               </p>
-                                              <p className="mt-1 text-slate-650 text-left"><strong className="text-slate-850 text-[10.5px]">Pembahasan:</strong> {q.explanation || "-"}</p>
+                                              <p className="mt-1.5 text-slate-650 text-left whitespace-pre-wrap leading-relaxed border-t border-orange-100 pt-1.5"><strong className="text-slate-850 text-[10.5px] block mb-1">Pembahasan & Analisis Soal:</strong>{q.explanation || "-"}</p>
                                             </div>
                                           </div>
                                         )}
@@ -3886,11 +4292,14 @@ Presiden meresmikan kota Nusantara sebagai IKN baru Republik Indonesia.
                                 </div>
                               )}
                             </div>
-                          )}
-                        </div>
+                          );
+                        })()}
                       </div>
-                    );
-                  })}
+                    )}
+                  </div>
+                </div>
+              );
+            })}
                 </div>
               </div>
             </div>
