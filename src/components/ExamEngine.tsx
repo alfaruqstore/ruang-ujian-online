@@ -9,6 +9,41 @@ import {
 } from "lucide-react";
 import { ExamPackage, Question, StudentAnswers } from "../types";
 
+export function splitTextAtMiddle(text: string): [string, string] {
+  if (!text) return ["", ""];
+  
+  // Try splitting by newline first
+  const newlines = text.split("\n");
+  if (newlines.length > 1) {
+    const half = Math.ceil(newlines.length / 2);
+    const part1 = newlines.slice(0, half).join("\n");
+    const part2 = newlines.slice(half).join("\n");
+    return [part1, part2];
+  }
+  
+  // Try splitting by a sentence boundary (period followed by space)
+  const sentences = text.split(/(?<=\. )/);
+  if (sentences.length > 1) {
+    const half = Math.ceil(sentences.length / 2);
+    const part1 = sentences.slice(0, half).join("");
+    const part2 = sentences.slice(half).join("");
+    return [part1, part2];
+  }
+
+  // If no sentences or newlines, split approximately by words (midpoint of words)
+  const words = text.split(" ");
+  if (words.length > 4) {
+    const half = Math.ceil(words.length / 2);
+    const part1 = words.slice(0, half).join(" ");
+    const part2 = words.slice(half).join(" ");
+    return [part1, part2];
+  }
+
+  // Otherwise, just split the string in half
+  const mid = Math.floor(text.length / 2);
+  return [text.substring(0, mid), text.substring(mid)];
+}
+
 interface ExamEngineProps {
   pkg: ExamPackage;
   subExamName?: string | null;
@@ -297,11 +332,40 @@ export default function ExamEngine({ pkg, subExamName, questions, onCancel, onSu
                   </div>
                 )}
 
-                <p className="text-xs sm:text-sm text-slate-800 font-medium whitespace-pre-wrap leading-relaxed">
-                  {currentQ.questionText}
-                </p>
+                {currentQ.questionImage && currentQ.questionImagePosition === "middle" ? (
+                  <div className="space-y-4">
+                    {(() => {
+                      const [part1, part2] = splitTextAtMiddle(currentQ.questionText);
+                      return (
+                        <>
+                          <p className="text-xs sm:text-sm text-slate-800 font-medium whitespace-pre-wrap leading-relaxed">
+                            {part1}
+                          </p>
+                          <div className="bg-white border border-slate-250 p-3 rounded-xl max-w-lg shadow-sm">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-2">Gbr Lampiran Pertanyaan:</span>
+                            <img 
+                              src={currentQ.questionImage} 
+                              alt="Lampiran Soal" 
+                              className="max-h-64 w-auto object-contain rounded"
+                              referrerPolicy="no-referrer"
+                            />
+                          </div>
+                          {part2 && (
+                            <p className="text-xs sm:text-sm text-slate-800 font-medium whitespace-pre-wrap leading-relaxed">
+                              {part2}
+                            </p>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
+                ) : (
+                  <p className="text-xs sm:text-sm text-slate-800 font-medium whitespace-pre-wrap leading-relaxed">
+                    {currentQ.questionText}
+                  </p>
+                )}
 
-                {currentQ.questionImage && currentQ.questionImagePosition !== "above" && (
+                {currentQ.questionImage && currentQ.questionImagePosition !== "above" && currentQ.questionImagePosition !== "middle" && (
                   <div className="bg-white border border-slate-250 p-3 rounded-xl max-w-lg shadow-sm">
                     <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-2">Gbr Lampiran Pertanyaan:</span>
                     <img 
@@ -347,10 +411,27 @@ export default function ExamEngine({ pkg, subExamName, questions, onCancel, onSu
                         </div>
                       )}
 
-                      <span className="text-xs sm:text-sm font-semibold leading-relaxed text-slate-850 px-1">{currentQ.options[option]}</span>
+                      {optImg && optImgPos === "middle" ? (
+                        <div className="space-y-2 w-full font-semibold">
+                          {(() => {
+                            const [part1, part2] = splitTextAtMiddle(currentQ.options[option] || "");
+                            return (
+                              <span className="text-xs sm:text-sm leading-relaxed text-slate-850 px-1 block">
+                                {part1 || ""}
+                                <span className="bg-slate-50 p-2 rounded-lg border border-slate-200 my-1 block self-start max-w-sm shrink-0">
+                                  <img src={optImg} alt={`Lampiran ${option}`} className="max-h-32 w-auto object-contain rounded" />
+                                </span>
+                                {part2 || ""}
+                              </span>
+                            );
+                          })()}
+                        </div>
+                      ) : (
+                        <span className="text-xs sm:text-sm font-semibold leading-relaxed text-slate-850 px-1">{currentQ.options[option]}</span>
+                      )}
 
                       {/* Display option image below the choice text */}
-                      {optImg && optImgPos !== "above" && (
+                      {optImg && optImgPos !== "above" && optImgPos !== "middle" && (
                         <div className="bg-slate-50 p-2 rounded-lg border border-slate-200 mt-1 max-w-sm shrink-0 self-start">
                           <img src={optImg} alt={`Lampiran ${option}`} className="max-h-32 w-auto object-contain rounded" />
                         </div>

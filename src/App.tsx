@@ -50,6 +50,46 @@ export default function App() {
     }
   }, [currentUser]);
 
+  // Security measures to prevent right click, view-source (ctrl+u), save page (ctrl+s), and inspect tools
+  useEffect(() => {
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Disabling Ctrl+S / Cmd+S (Save page)
+      if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+      }
+
+      // Disabling Ctrl+U / Cmd+Option+U (View Source)
+      if (((e.ctrlKey || e.metaKey) && (e.key === 'u' || e.key === 'U')) || ((e.metaKey && e.altKey) && (e.key === 'u' || e.key === 'U'))) {
+        e.preventDefault();
+      }
+
+      // Disabling F12, Ctrl+Shift+I / Cmd+Option+I (Inspect element)
+      if (
+        e.key === 'F12' || 
+        ((e.ctrlKey && e.shiftKey) && (e.key === 'i' || e.key === 'I')) || 
+        ((e.metaKey && e.altKey) && (e.key === 'i' || e.key === 'I')) ||
+        ((e.ctrlKey && e.shiftKey) && (e.key === 'c' || e.key === 'C')) ||
+        ((e.metaKey && e.altKey) && (e.key === 'c' || e.key === 'C')) ||
+        ((e.ctrlKey && e.shiftKey) && (e.key === 'j' || e.key === 'J')) ||
+        ((e.metaKey && e.altKey) && (e.key === 'j' || e.key === 'J'))
+      ) {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener("contextmenu", handleContextMenu);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("contextmenu", handleContextMenu);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   // Inject color values dynamically into variables overlaying the exact primary (#0F4C81) and secondary (#F58220) classes
   useEffect(() => {
     const themeObj = APP_THEMES.find(t => t.id === themeId) || APP_THEMES[0];

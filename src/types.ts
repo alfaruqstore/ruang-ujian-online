@@ -28,7 +28,7 @@ export interface Question {
   subExamName: string; // To which subtopic / sub-exam it belongs
   questionText: string;
   questionImage?: string; // Optional image URL or base64
-  questionImagePosition?: "above" | "below"; // Position of question image
+  questionImagePosition?: "above" | "below" | "middle"; // Position of question image
   options: {
     A: string;
     B: string;
@@ -44,11 +44,11 @@ export interface Question {
     E?: string;
   };
   optionImagePositions?: {
-    A?: "above" | "below";
-    B?: "above" | "below";
-    C?: "above" | "below";
-    D?: "above" | "below";
-    E?: "above" | "below";
+    A?: "above" | "below" | "middle";
+    B?: "above" | "below" | "middle";
+    C?: "above" | "below" | "middle";
+    D?: "above" | "below" | "middle";
+    E?: "above" | "below" | "middle";
   };
   correctOption: "A" | "B" | "C" | "D" | "E";
   explanation?: string;

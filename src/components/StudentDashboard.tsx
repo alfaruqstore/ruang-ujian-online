@@ -433,6 +433,19 @@ export default function StudentDashboard({
     "EXM-LAINNYA": "from-indigo-900 via-violet-800 to-purple-900"
   };
 
+  const packageGradients = [
+    "from-blue-600 via-indigo-600 to-indigo-750",
+    "from-emerald-600 via-teal-600 to-cyan-700",
+    "from-orange-500 via-amber-600 to-yellow-600",
+    "from-purple-600 via-violet-600 to-indigo-750",
+    "from-rose-500 via-pink-600 to-red-600",
+    "from-teal-550 via-emerald-600 to-green-600",
+    "from-cyan-550 via-sky-600 to-blue-650",
+    "from-fuchsia-550 via-purple-600 to-pink-650",
+    "from-amber-500 via-orange-550 to-yellow-550",
+    "from-slate-600 via-slate-700 to-slate-800"
+  ];
+
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans overflow-hidden relative">
       
@@ -793,13 +806,13 @@ export default function StudentDashboard({
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {filteredPackages.map((pkg) => {
+                      {filteredPackages.map((pkg, idx) => {
                         const isAllSubExamsCompleted = pkg.subExams.every(
                           sub => attempts.some(att => att.examId === pkg.id && att.subExamName === sub.name && att.status === "SUBMITTED")
                         );
                         const isPkgLocked = locks[pkg.id] === true || isAllSubExamsCompleted;
-                        // Determine custom background gradient from color map
-                        const bgGrad = packageColorMap[pkg.id] || "from-blue-600 to-indigo-800";
+                        // Determine custom background gradient from color map or index rotation
+                        const bgGrad = packageColorMap[pkg.id] || packageGradients[idx % packageGradients.length];
                         
                         return (
                           <div

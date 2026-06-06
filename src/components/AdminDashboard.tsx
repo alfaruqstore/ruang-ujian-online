@@ -138,6 +138,41 @@ interface AdminDashboardProps {
   onThemeChange?: (themeId: string) => void;
 }
 
+export function splitTextAtMiddle(text: string): [string, string] {
+  if (!text) return ["", ""];
+  
+  // Try splitting by newline first
+  const newlines = text.split("\n");
+  if (newlines.length > 1) {
+    const half = Math.ceil(newlines.length / 2);
+    const part1 = newlines.slice(0, half).join("\n");
+    const part2 = newlines.slice(half).join("\n");
+    return [part1, part2];
+  }
+  
+  // Try splitting by a sentence boundary (period followed by space)
+  const sentences = text.split(/(?<=\. )/);
+  if (sentences.length > 1) {
+    const half = Math.ceil(sentences.length / 2);
+    const part1 = sentences.slice(0, half).join("");
+    const part2 = sentences.slice(half).join("");
+    return [part1, part2];
+  }
+
+  // If no sentences or newlines, split approximately by words (midpoint of words)
+  const words = text.split(" ");
+  if (words.length > 4) {
+    const half = Math.ceil(words.length / 2);
+    const part1 = words.slice(0, half).join(" ");
+    const part2 = words.slice(half).join(" ");
+    return [part1, part2];
+  }
+
+  // Otherwise, just split the string in half
+  const mid = Math.floor(text.length / 2);
+  return [text.substring(0, mid), text.substring(mid)];
+}
+
 export default function AdminDashboard({
   user,
   packages: initialPackages,
@@ -194,17 +229,17 @@ export default function AdminDashboard({
   const [editQCorrectOption, setEditQCorrectOption] = useState<"A" | "B" | "C" | "D" | "E">("A");
   const [editQExplanation, setEditQExplanation] = useState("");
   const [editQQuestionImg, setEditQQuestionImg] = useState("");
-  const [editQQuestionImgPos, setEditQQuestionImgPos] = useState<"above" | "below">("below");
+  const [editQQuestionImgPos, setEditQQuestionImgPos] = useState<"above" | "below" | "middle">("below");
   const [editQImgA, setEditQImgA] = useState("");
   const [editQImgB, setEditQImgB] = useState("");
   const [editQImgC, setEditQImgC] = useState("");
   const [editQImgD, setEditQImgD] = useState("");
   const [editQImgE, setEditQImgE] = useState("");
-  const [editQImgPosA, setEditQImgPosA] = useState<"above" | "below">("below");
-  const [editQImgPosB, setEditQImgPosB] = useState<"above" | "below">("below");
-  const [editQImgPosC, setEditQImgPosC] = useState<"above" | "below">("below");
-  const [editQImgPosD, setEditQImgPosD] = useState<"above" | "below">("below");
-  const [editQImgPosE, setEditQImgPosE] = useState<"above" | "below">("below");
+  const [editQImgPosA, setEditQImgPosA] = useState<"above" | "below" | "middle">("below");
+  const [editQImgPosB, setEditQImgPosB] = useState<"above" | "below" | "middle">("below");
+  const [editQImgPosC, setEditQImgPosC] = useState<"above" | "below" | "middle">("below");
+  const [editQImgPosD, setEditQImgPosD] = useState<"above" | "below" | "middle">("below");
+  const [editQImgPosE, setEditQImgPosE] = useState<"above" | "below" | "middle">("below");
   const [pkgSubExamFilters, setPkgSubExamFilters] = useState<Record<string, string>>({});
 
   // Custom Deluxe Confirmation Modal states
@@ -319,17 +354,17 @@ export default function AdminDashboard({
   const [optionE, setOptionE] = useState("");
 
   const [questionImg, setQuestionImg] = useState("");
-  const [questionImgPos, setQuestionImgPos] = useState<"above" | "below">("below");
+  const [questionImgPos, setQuestionImgPos] = useState<"above" | "below" | "middle">("below");
   const [imgA, setImgA] = useState("");
   const [imgB, setImgB] = useState("");
   const [imgC, setImgC] = useState("");
   const [imgD, setImgD] = useState("");
   const [imgE, setImgE] = useState("");
-  const [imgPosA, setImgPosA] = useState<"above" | "below">("below");
-  const [imgPosB, setImgPosB] = useState<"above" | "below">("below");
-  const [imgPosC, setImgPosC] = useState<"above" | "below">("below");
-  const [imgPosD, setImgPosD] = useState<"above" | "below">("below");
-  const [imgPosE, setImgPosE] = useState<"above" | "below">("below");
+  const [imgPosA, setImgPosA] = useState<"above" | "below" | "middle">("below");
+  const [imgPosB, setImgPosB] = useState<"above" | "below" | "middle">("below");
+  const [imgPosC, setImgPosC] = useState<"above" | "below" | "middle">("below");
+  const [imgPosD, setImgPosD] = useState<"above" | "below" | "middle">("below");
+  const [imgPosE, setImgPosE] = useState<"above" | "below" | "middle">("below");
 
   // Input states for Creating Manual Package
   const [newPkgId, setNewPkgId] = useState("");
@@ -2597,7 +2632,17 @@ JAWABAN : D`
                               onChange={() => setQuestionImgPos("above")}
                               className="text-blue-600 focus:ring-blue-550 h-3.5 w-3.5"
                             />
-                            Di Atas Teks Pertanyaan Soal
+                            Di Atas Teks
+                          </label>
+                          <label className="flex items-center gap-1.5 text-xs text-slate-700 cursor-pointer font-bold">
+                            <input 
+                              type="radio" 
+                              name="questionImgPos" 
+                              checked={questionImgPos === "middle"} 
+                              onChange={() => setQuestionImgPos("middle")}
+                              className="text-blue-600 focus:ring-blue-550 h-3.5 w-3.5"
+                            />
+                            Di Tengah Teks
                           </label>
                           <label className="flex items-center gap-1.5 text-xs text-slate-700 cursor-pointer font-bold">
                             <input 
@@ -2607,7 +2652,7 @@ JAWABAN : D`
                               onChange={() => setQuestionImgPos("below")}
                               className="text-blue-600 focus:ring-blue-550 h-3.5 w-3.5"
                             />
-                            Di Bawah Teks Pertanyaan Soal
+                            Di Bawah Teks
                           </label>
                         </div>
                       </div>
@@ -2671,11 +2716,12 @@ JAWABAN : D`
                             <img src={item.img} alt="review" className="h-6 w-auto rounded border" />
                             <select
                               value={item.imgPos}
-                              onChange={(e) => item.imgPosSetter(e.target.value as "above" | "below")}
+                              onChange={(e) => item.imgPosSetter(e.target.value as "above" | "below" | "middle")}
                               className="text-[9px] bg-slate-50 border border-slate-250 rounded px-1.5 py-1 text-slate-700 font-extrabold focus:outline-none"
                             >
-                              <option value="above">Di Atas Jawaban</option>
-                              <option value="below">Di Bawah Jawaban</option>
+                              <option value="above">Di Atas Teks</option>
+                              <option value="middle">Di Tengah Teks</option>
+                              <option value="below">Di Bawah Teks</option>
                             </select>
                           </div>
                         )}
@@ -4352,10 +4398,11 @@ Presiden meresmikan kota Nusantara sebagai IKN baru Republik Indonesia.
                                                     </div>
                                                     <select
                                                       value={editQQuestionImgPos}
-                                                      onChange={(e) => setEditQQuestionImgPos(e.target.value as "above" | "below")}
+                                                      onChange={(e) => setEditQQuestionImgPos(e.target.value as "above" | "below" | "middle")}
                                                       className="text-[9.5px] bg-slate-50 border border-slate-300 rounded px-1.5 py-0.5 text-slate-700 font-bold focus:outline-none"
                                                     >
                                                       <option value="above">Di Atas Soal</option>
+                                                      <option value="middle">Di Tengah Soal</option>
                                                       <option value="below">Di Bawah Soal</option>
                                                     </select>
                                                   </div>
@@ -4421,10 +4468,11 @@ Presiden meresmikan kota Nusantara sebagai IKN baru Republik Indonesia.
                                                         <div className="pt-1">
                                                           <select
                                                             value={imgPosVal}
-                                                            onChange={(e) => imgPosSetter(e.target.value as "above" | "below")}
+                                                            onChange={(e) => imgPosSetter(e.target.value as "above" | "below" | "middle")}
                                                             className="w-full text-[8.5px] bg-slate-50 border border-slate-300 rounded px-1 py-0.5 text-slate-700 font-extrabold focus:outline-none"
                                                           >
                                                             <option value="above">Di Atas Teks</option>
+                                                            <option value="middle">Di Tengah Teks</option>
                                                             <option value="below">Di Bawah Teks</option>
                                                           </select>
                                                         </div>
@@ -4474,9 +4522,27 @@ Presiden meresmikan kota Nusantara sebagai IKN baru Republik Indonesia.
                                                 </div>
                                               )}
                                               
-                                              <p className="font-extrabold text-slate-900 whitespace-pre-wrap leading-relaxed">{q.questionText}</p>
+                                              {q.questionImage && q.questionImagePosition === "middle" ? (
+                                                <div className="space-y-2">
+                                                  {(() => {
+                                                    const [part1, part2] = splitTextAtMiddle(q.questionText);
+                                                    return (
+                                                      <>
+                                                        <p className="font-extrabold text-slate-900 whitespace-pre-wrap leading-relaxed">{part1}</p>
+                                                        <div className="bg-white border border-slate-200 p-2.5 rounded-xl max-w-sm my-1.5">
+                                                          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider block mb-1">Gambar Lampiran (Tengah):</span>
+                                                          <img src={q.questionImage} alt="question illustration" className="max-h-32 w-auto object-contain rounded" />
+                                                        </div>
+                                                        {part2 && <p className="font-extrabold text-slate-900 whitespace-pre-wrap leading-relaxed">{part2}</p>}
+                                                      </>
+                                                    );
+                                                  })()}
+                                                </div>
+                                              ) : (
+                                                <p className="font-extrabold text-slate-900 whitespace-pre-wrap leading-relaxed">{q.questionText}</p>
+                                              )}
                                               
-                                              {q.questionImage && q.questionImagePosition !== "above" && (
+                                              {q.questionImage && q.questionImagePosition !== "above" && q.questionImagePosition !== "middle" && (
                                                 <div className="bg-white border border-slate-200 p-2.5 rounded-xl max-w-sm">
                                                   <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider block mb-1">Gambar Lampiran (Bawah):</span>
                                                   <img src={q.questionImage} alt="question illustration" className="max-h-32 w-auto object-contain rounded" />
@@ -4515,10 +4581,27 @@ Presiden meresmikan kota Nusantara sebagai IKN baru Republik Indonesia.
                                                       </div>
                                                     )}
 
-                                                    <span className="leading-relaxed break-words">{optText || <span className="italic text-slate-400">Kosong</span>}</span>
+                                                    {optImg && optImgPos === "middle" ? (
+                                                      <div className="space-y-1 w-full">
+                                                        {(() => {
+                                                          const [part1, part2] = splitTextAtMiddle(optText || "");
+                                                          return (
+                                                            <span className="leading-relaxed break-words block">
+                                                              {part1 || ""}
+                                                              <span className="bg-slate-50 p-1 rounded border border-slate-200 my-1 block self-start max-w-xs">
+                                                                <img src={optImg} alt={`Lampiran ${opt}`} className="max-h-20 w-auto rounded object-contain" />
+                                                              </span>
+                                                              {part2 || ""}
+                                                            </span>
+                                                          );
+                                                        })()}
+                                                      </div>
+                                                    ) : (
+                                                      <span className="leading-relaxed break-words">{optText || <span className="italic text-slate-400">Kosong</span>}</span>
+                                                    )}
 
                                                     {/* Option image BELOW choice text */}
-                                                    {optImg && optImgPos !== "above" && (
+                                                    {optImg && optImgPos !== "above" && optImgPos !== "middle" && (
                                                       <div className="bg-slate-50 p-1 rounded border border-slate-200 self-start">
                                                         <img src={optImg} alt={`Lampiran ${opt}`} className="max-h-20 w-auto rounded object-contain" />
                                                       </div>
