@@ -283,56 +283,76 @@ export default function ExamEngine({ pkg, subExamName, questions, onCancel, onSu
           {/* Core content paper Card */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-8 min-h-[300px] sm:min-h-[400px] flex flex-col justify-between">
             <div className="space-y-6">
-              
-              {/* Question Text paragraph */}
-              <div className="bg-slate-50 p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-inner">
+                           {/* Question Text & Positional Image Layout */}
+              <div className="bg-slate-50 p-3.5 sm:p-5 rounded-2xl border border-slate-200 shadow-inner flex flex-col gap-4">
+                {currentQ.questionImage && currentQ.questionImagePosition === "above" && (
+                  <div className="bg-white border border-slate-250 p-3 rounded-xl max-w-lg shadow-sm">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-2">Gbr Lampiran Pertanyaan:</span>
+                    <img 
+                      src={currentQ.questionImage} 
+                      alt="Lampiran Soal" 
+                      className="max-h-64 w-auto object-contain rounded"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                )}
+
                 <p className="text-xs sm:text-sm text-slate-800 font-medium whitespace-pre-wrap leading-relaxed">
                   {currentQ.questionText}
                 </p>
+
+                {currentQ.questionImage && currentQ.questionImagePosition !== "above" && (
+                  <div className="bg-white border border-slate-250 p-3 rounded-xl max-w-lg shadow-sm">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-2">Gbr Lampiran Pertanyaan:</span>
+                    <img 
+                      src={currentQ.questionImage} 
+                      alt="Lampiran Soal" 
+                      className="max-h-64 w-auto object-contain rounded"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                )}
               </div>
 
-              {/* Attached local/remote images (if any) */}
-              {currentQ.questionImage && (
-                <div className="bg-slate-50 border border-slate-250 p-3 rounded-xl max-w-lg shadow-sm">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-2">Gbr Lampiran Pertanyaan:</span>
-                  <img 
-                    src={currentQ.questionImage} 
-                    alt="Lampiran Soal" 
-                    className="max-h-64 w-auto object-contain rounded"
-                    referrerPolicy="no-referrer"
-                  />
-                </div>
-              )}
-
               {/* Pilihan Ganda (Choice Panels) A to E */}
-              <div className="space-y-3 pt-2">
+              <div className="space-y-4 pt-2">
                 {(Object.keys(currentQ.options) as Array<"A" | "B" | "C" | "D" | "E">).map((option) => {
                   const isChecked = answers[currentQ.id]?.answer === option;
                   const optImg = currentQ.optionImages ? currentQ.optionImages[option] : undefined;
+                  const optImgPos = currentQ.optionImagePositions ? currentQ.optionImagePositions[option] : "below";
 
                   return (
                     <button
                       key={option}
                       onClick={() => selectOption(option)}
-                      className={`w-full text-left p-3 sm:p-4 rounded-xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer select-none ${
+                      className={`w-full text-left p-4 rounded-xl border transition-all flex flex-col gap-3.5 cursor-pointer select-none ${
                         isChecked 
                           ? "bg-[#0F4C81]/10 border-[#0F4C81] shadow-sm text-slate-900 animate-none" 
                           : "bg-white border-slate-250 hover:bg-slate-50 text-slate-700"
                       }`}
                     >
-                      <div className="flex items-start sm:items-center gap-3">
+                      <div className="flex items-center gap-3 border-b border-slate-100 pb-2 w-full">
                         <span className={`w-7 h-7 rounded-full shrink-0 flex items-center justify-center font-bold font-mono text-xs ${
                           isChecked ? "bg-[#0F4C81] text-white" : "bg-slate-100 text-slate-700"
                         }`}>
                           {option}
                         </span>
-                        <span className="text-xs font-semibold leading-relaxed pt-0.5 sm:pt-0">{currentQ.options[option]}</span>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">PILIHAN {option}</span>
                       </div>
 
-                      {/* Display attachment on the specific options A-E */}
-                      {optImg && (
-                        <div className="bg-slate-50 p-1.5 rounded border border-slate-200 mt-2 md:mt-0 max-w-[120px] shrink-0 self-center">
-                          <img src={optImg} alt={`Lampiran ${option}`} className="max-h-12 w-auto object-contain rounded" />
+                      {/* Display option image above the choice text */}
+                      {optImg && optImgPos === "above" && (
+                        <div className="bg-slate-50 p-2 rounded-lg border border-slate-200 mt-1 max-w-sm shrink-0 self-start">
+                          <img src={optImg} alt={`Lampiran ${option}`} className="max-h-32 w-auto object-contain rounded" />
+                        </div>
+                      )}
+
+                      <span className="text-xs sm:text-sm font-semibold leading-relaxed text-slate-850 px-1">{currentQ.options[option]}</span>
+
+                      {/* Display option image below the choice text */}
+                      {optImg && optImgPos !== "above" && (
+                        <div className="bg-slate-50 p-2 rounded-lg border border-slate-200 mt-1 max-w-sm shrink-0 self-start">
+                          <img src={optImg} alt={`Lampiran ${option}`} className="max-h-32 w-auto object-contain rounded" />
                         </div>
                       )}
                     </button>

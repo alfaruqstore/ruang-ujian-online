@@ -193,6 +193,18 @@ export default function AdminDashboard({
   const [editQOptionE, setEditQOptionE] = useState("");
   const [editQCorrectOption, setEditQCorrectOption] = useState<"A" | "B" | "C" | "D" | "E">("A");
   const [editQExplanation, setEditQExplanation] = useState("");
+  const [editQQuestionImg, setEditQQuestionImg] = useState("");
+  const [editQQuestionImgPos, setEditQQuestionImgPos] = useState<"above" | "below">("below");
+  const [editQImgA, setEditQImgA] = useState("");
+  const [editQImgB, setEditQImgB] = useState("");
+  const [editQImgC, setEditQImgC] = useState("");
+  const [editQImgD, setEditQImgD] = useState("");
+  const [editQImgE, setEditQImgE] = useState("");
+  const [editQImgPosA, setEditQImgPosA] = useState<"above" | "below">("below");
+  const [editQImgPosB, setEditQImgPosB] = useState<"above" | "below">("below");
+  const [editQImgPosC, setEditQImgPosC] = useState<"above" | "below">("below");
+  const [editQImgPosD, setEditQImgPosD] = useState<"above" | "below">("below");
+  const [editQImgPosE, setEditQImgPosE] = useState<"above" | "below">("below");
   const [pkgSubExamFilters, setPkgSubExamFilters] = useState<Record<string, string>>({});
 
   // Custom Deluxe Confirmation Modal states
@@ -307,11 +319,17 @@ export default function AdminDashboard({
   const [optionE, setOptionE] = useState("");
 
   const [questionImg, setQuestionImg] = useState("");
+  const [questionImgPos, setQuestionImgPos] = useState<"above" | "below">("below");
   const [imgA, setImgA] = useState("");
   const [imgB, setImgB] = useState("");
   const [imgC, setImgC] = useState("");
   const [imgD, setImgD] = useState("");
   const [imgE, setImgE] = useState("");
+  const [imgPosA, setImgPosA] = useState<"above" | "below">("below");
+  const [imgPosB, setImgPosB] = useState<"above" | "below">("below");
+  const [imgPosC, setImgPosC] = useState<"above" | "below">("below");
+  const [imgPosD, setImgPosD] = useState<"above" | "below">("below");
+  const [imgPosE, setImgPosE] = useState<"above" | "below">("below");
 
   // Input states for Creating Manual Package
   const [newPkgId, setNewPkgId] = useState("");
@@ -1156,6 +1174,18 @@ JAWABAN : D`
     setEditQOptionE(q.options.E || "");
     setEditQCorrectOption(q.correctOption as any || "A");
     setEditQExplanation(q.explanation || "");
+    setEditQQuestionImg(q.questionImage || "");
+    setEditQQuestionImgPos(q.questionImagePosition || "below");
+    setEditQImgA(q.optionImages?.A || "");
+    setEditQImgB(q.optionImages?.B || "");
+    setEditQImgC(q.optionImages?.C || "");
+    setEditQImgD(q.optionImages?.D || "");
+    setEditQImgE(q.optionImages?.E || "");
+    setEditQImgPosA(q.optionImagePositions?.A || "below");
+    setEditQImgPosB(q.optionImagePositions?.B || "below");
+    setEditQImgPosC(q.optionImagePositions?.C || "below");
+    setEditQImgPosD(q.optionImagePositions?.D || "below");
+    setEditQImgPosE(q.optionImagePositions?.E || "below");
   };
 
   const handleSaveEditedQuestion = (qId: string) => {
@@ -1164,12 +1194,28 @@ JAWABAN : D`
         return {
           ...q,
           questionText: editQText,
+          questionImage: editQQuestionImg || undefined,
+          questionImagePosition: editQQuestionImgPos,
           options: {
             A: editQOptionA,
             B: editQOptionB,
             C: editQOptionC,
             D: editQOptionD,
             E: editQOptionE
+          },
+          optionImages: (editQImgA || editQImgB || editQImgC || editQImgD || editQImgE) ? {
+            A: editQImgA || undefined,
+            B: editQImgB || undefined,
+            C: editQImgC || undefined,
+            D: editQImgD || undefined,
+            E: editQImgE || undefined
+          } : undefined,
+          optionImagePositions: {
+            A: editQImgPosA,
+            B: editQImgPosB,
+            C: editQImgPosC,
+            D: editQImgPosD,
+            E: editQImgPosE
           },
           correctOption: editQCorrectOption,
           explanation: editQExplanation
@@ -1441,6 +1487,7 @@ JAWABAN : D`
       subExamName: finalSubExamName || "Umum",
       questionText,
       questionImage: questionImg || undefined,
+      questionImagePosition: questionImgPos,
       options: {
         A: optionA,
         B: optionB,
@@ -1455,6 +1502,13 @@ JAWABAN : D`
         D: imgD || undefined,
         E: imgE || undefined,
       } : undefined,
+      optionImagePositions: {
+        A: imgPosA,
+        B: imgPosB,
+        C: imgPosC,
+        D: imgPosD,
+        E: imgPosE
+      },
       correctOption: correctOption as "A" | "B" | "C" | "D" | "E",
       explanation: explanation || "Sesuai petunjuk manual jawaban benar.",
       isPublished: false // Saved in Question Bank, unpublished by default
@@ -1473,6 +1527,8 @@ JAWABAN : D`
     setQuestionText("");
     setOptionA(""); setOptionB(""); setOptionC(""); setOptionD(""); setOptionE("");
     setQuestionImg(""); setImgA(""); setImgB(""); setImgC(""); setImgD(""); setImgE("");
+    setQuestionImgPos("below");
+    setImgPosA("below"); setImgPosB("below"); setImgPosC("below"); setImgPosD("below"); setImgPosE("below");
     setExplanation("");
   };
 
@@ -2517,9 +2573,45 @@ JAWABAN : D`
                         className="text-xs text-slate-500 cursor-pointer"
                       />
                       {questionImg && (
-                        <img src={questionImg} alt="Preview" className="h-10 w-auto rounded border" />
+                        <div className="flex items-center gap-3">
+                          <img src={questionImg} alt="Preview" className="h-10 w-auto rounded border" />
+                          <button 
+                            type="button"
+                            onClick={() => setQuestionImg("")}
+                            className="bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 border border-rose-200 text-[10px] font-extrabold px-2.5 py-1 rounded"
+                          >
+                            <i className="fa-solid fa-trash mr-1"></i>Hapus Gambar
+                          </button>
+                        </div>
                       )}
                     </div>
+                    {questionImg && (
+                      <div className="mt-2.5 p-3 bg-blue-50/45 rounded-lg border border-blue-100/70 flex items-center gap-3">
+                        <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Posisikan Gambar:</span>
+                        <div className="flex gap-3">
+                          <label className="flex items-center gap-1.5 text-xs text-slate-700 cursor-pointer font-bold">
+                            <input 
+                              type="radio" 
+                              name="questionImgPos" 
+                              checked={questionImgPos === "above"} 
+                              onChange={() => setQuestionImgPos("above")}
+                              className="text-blue-600 focus:ring-blue-550 h-3.5 w-3.5"
+                            />
+                            Di Atas Teks Pertanyaan Soal
+                          </label>
+                          <label className="flex items-center gap-1.5 text-xs text-slate-700 cursor-pointer font-bold">
+                            <input 
+                              type="radio" 
+                              name="questionImgPos" 
+                              checked={questionImgPos === "below"} 
+                              onChange={() => setQuestionImgPos("below")}
+                              className="text-blue-600 focus:ring-blue-550 h-3.5 w-3.5"
+                            />
+                            Di Bawah Teks Pertanyaan Soal
+                          </label>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -2528,11 +2620,11 @@ JAWABAN : D`
                 
                 <div className="space-y-4">
                   {[
-                    { label: "A", val: optionA, setter: setOptionA, img: imgA, imgSetter: setImgA },
-                    { label: "B", val: optionB, setter: setOptionB, img: imgB, imgSetter: setImgB },
-                    { label: "C", val: optionC, setter: setOptionC, img: imgC, imgSetter: setImgC },
-                    { label: "D", val: optionD, setter: setOptionD, img: imgD, imgSetter: setImgD },
-                    { label: "E", val: optionE, setter: setOptionE, img: imgE, imgSetter: setImgE }
+                    { label: "A", val: optionA, setter: setOptionA, img: imgA, imgSetter: setImgA, imgPos: imgPosA, imgPosSetter: setImgPosA },
+                    { label: "B", val: optionB, setter: setOptionB, img: imgB, imgSetter: setImgB, imgPos: imgPosB, imgPosSetter: setImgPosB },
+                    { label: "C", val: optionC, setter: setOptionC, img: imgC, imgSetter: setImgC, imgPos: imgPosC, imgPosSetter: setImgPosC },
+                    { label: "D", val: optionD, setter: setOptionD, img: imgD, imgSetter: setImgD, imgPos: imgPosD, imgPosSetter: setImgPosD },
+                    { label: "E", val: optionE, setter: setOptionE, img: imgE, imgSetter: setImgE, imgPos: imgPosE, imgPosSetter: setImgPosE }
                   ].map((item, idx) => (
                     <div key={item.label} className="p-4 bg-slate-50/50 rounded-xl border border-slate-150 flex flex-col md:flex-row md:items-center gap-4">
                       <span className="w-8 h-8 rounded-full bg-slate-200 text-slate-700 font-black text-xs flex items-center justify-center shrink-0">
@@ -2546,24 +2638,47 @@ JAWABAN : D`
                         className="flex-1 rounded-lg border border-slate-300 bg-white p-2 text-xs focus:outline-none focus:ring-1 focus:ring-blue-600"
                       />
 
-                      {/* Image attachments for choices */}
-                      <div className="flex items-center gap-3 shrink-0">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleImageFileChange(e, item.imgSetter)}
-                          id={`manual-choice-img-${item.label}`}
-                          className="hidden"
-                        />
-                        <label
-                          htmlFor={`manual-choice-img-${item.label}`}
-                          className={`px-3 py-1.5 rounded-lg border border-slate-200 text-[10px] font-extrabold cursor-pointer hover:bg-slate-100 uppercase ${
-                            item.img ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "bg-white text-slate-500"
-                          }`}
-                        >
-                          {item.img ? "Gambar Terunggah" : "+ Gambar"}
-                        </label>
-                        {item.img && <img src={item.img} alt="review" className="h-6 w-auto rounded" />}
+                      {/* Image attachments & positioning for choices */}
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2.5 shrink-0 bg-white p-2 rounded-lg border border-slate-200">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleImageFileChange(e, item.imgSetter)}
+                            id={`manual-choice-img-${item.label}`}
+                            className="hidden"
+                          />
+                          <label
+                            htmlFor={`manual-choice-img-${item.label}`}
+                            className={`px-3 py-1.5 rounded-lg border border-slate-200 text-[10px] font-black cursor-pointer hover:bg-slate-100 uppercase ${
+                              item.img ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "bg-white text-slate-550"
+                            }`}
+                          >
+                            {item.img ? "Ubah Gambar" : "+ Gambar"}
+                          </label>
+                          {item.img && (
+                            <button
+                              type="button"
+                              onClick={() => item.imgSetter("")}
+                              className="text-[9px] text-rose-500 hover:underline font-black uppercase"
+                            >
+                              Hapus
+                            </button>
+                          )}
+                        </div>
+                        {item.img && (
+                          <div className="flex items-center gap-2 border-l border-slate-200 pl-2">
+                            <img src={item.img} alt="review" className="h-6 w-auto rounded border" />
+                            <select
+                              value={item.imgPos}
+                              onChange={(e) => item.imgPosSetter(e.target.value as "above" | "below")}
+                              className="text-[9px] bg-slate-50 border border-slate-250 rounded px-1.5 py-1 text-slate-700 font-extrabold focus:outline-none"
+                            >
+                              <option value="above">Di Atas Jawaban</option>
+                              <option value="below">Di Bawah Jawaban</option>
+                            </select>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -4201,42 +4316,133 @@ Presiden meresmikan kota Nusantara sebagai IKN baru Republik Indonesia.
                                         </div>
 
                                         {isQEditing ? (
-                                          <div className="space-y-3 font-sans text-left">
-                                            <div>
-                                              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Pertanyaan Soal</label>
-                                              <textarea
-                                                rows={2.5}
-                                                value={editQText}
-                                                onChange={(e) => setEditQText(e.target.value)}
-                                                className="w-full bg-white p-2 rounded border border-slate-300 text-xs text-slate-800 focus:outline-none"
-                                              />
+                                          <div className="space-y-4 font-sans text-left bg-slate-50/50 p-4 rounded-2xl border border-slate-200">
+                                            {/* Edit Question Text & Image */}
+                                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                                              <div className="lg:col-span-8">
+                                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Pertanyaan Soal</label>
+                                                <textarea
+                                                  rows={3}
+                                                  value={editQText}
+                                                  onChange={(e) => setEditQText(e.target.value)}
+                                                  className="w-full bg-white p-2 rounded-xl border border-slate-300 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                                                />
+                                              </div>
+                                              <div className="lg:col-span-4 bg-white p-3 rounded-xl border border-slate-200 flex flex-col justify-between space-y-2">
+                                                <div>
+                                                  <label className="block text-[9px] font-bold text-slate-500 uppercase mb-1">Gambar Soal (Posisi Bebas)</label>
+                                                  <input 
+                                                    type="file" 
+                                                    accept="image/*"
+                                                    onChange={(e) => handleImageFileChange(e, setEditQQuestionImg)}
+                                                    className="text-[9px] text-slate-500 cursor-pointer w-full"
+                                                  />
+                                                </div>
+                                                {editQQuestionImg && (
+                                                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                      <img src={editQQuestionImg} alt="Preview" className="h-8 w-auto rounded border" />
+                                                      <button 
+                                                        type="button" 
+                                                        onClick={() => setEditQQuestionImg("")}
+                                                        className="text-[8px] text-rose-600 font-extrabold uppercase hover:underline"
+                                                      >
+                                                        Hapus
+                                                      </button>
+                                                    </div>
+                                                    <select
+                                                      value={editQQuestionImgPos}
+                                                      onChange={(e) => setEditQQuestionImgPos(e.target.value as "above" | "below")}
+                                                      className="text-[9.5px] bg-slate-50 border border-slate-300 rounded px-1.5 py-0.5 text-slate-700 font-bold focus:outline-none"
+                                                    >
+                                                      <option value="above">Di Atas Soal</option>
+                                                      <option value="below">Di Bawah Soal</option>
+                                                    </select>
+                                                  </div>
+                                                )}
+                                              </div>
                                             </div>
 
-                                            <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
+                                            {/* Edit Choice Options A-E */}
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                                               {["A", "B", "C", "D", "E"].map((opt) => {
                                                 const val = opt === "A" ? editQOptionA : opt === "B" ? editQOptionB : opt === "C" ? editQOptionC : opt === "D" ? editQOptionD : editQOptionE;
                                                 const setter = opt === "A" ? setEditQOptionA : opt === "B" ? setEditQOptionB : opt === "C" ? setEditQOptionC : opt === "D" ? setEditQOptionD : setEditQOptionE;
+                                                
+                                                const imgVal = opt === "A" ? editQImgA : opt === "B" ? editQImgB : opt === "C" ? editQImgC : opt === "D" ? editQImgD : editQImgE;
+                                                const imgSetter = opt === "A" ? setEditQImgA : opt === "B" ? setEditQImgB : opt === "C" ? setEditQImgC : opt === "D" ? setEditQImgD : setEditQImgE;
+                                                const imgPosVal = opt === "A" ? editQImgPosA : opt === "B" ? editQImgPosB : opt === "C" ? editQImgPosC : opt === "D" ? editQImgPosD : editQImgPosE;
+                                                const imgPosSetter = opt === "A" ? setEditQImgPosA : opt === "B" ? setEditQImgPosB : opt === "C" ? setEditQImgPosC : opt === "D" ? setEditQImgPosD : setEditQImgPosE;
+
                                                 return (
-                                                  <div key={opt}>
-                                                    <label className="block text-[9px] font-bold text-slate-500 mb-0.5">Pilihan {opt}</label>
-                                                    <input
-                                                      type="text"
-                                                      value={val}
-                                                      onChange={(e) => setter(e.target.value)}
-                                                      className="w-full bg-white px-2 py-1 rounded border border-slate-300 text-xs text-slate-800 focus:outline-none"
-                                                    />
+                                                  <div key={opt} className="bg-white p-3 rounded-xl border border-slate-200 flex flex-col justify-between space-y-2">
+                                                    <div>
+                                                      <label className="block text-[10px] font-bold text-slate-600 mb-1">Pilihan {opt}</label>
+                                                      <input
+                                                        type="text"
+                                                        value={val}
+                                                        onChange={(e) => setter(e.target.value)}
+                                                        className="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                                      />
+                                                    </div>
+
+                                                    <div className="space-y-1 pt-1.5 border-t border-slate-100">
+                                                      <div className="flex items-center justify-between gap-1">
+                                                        <span className="text-[8px] font-bold text-slate-400 uppercase">Gambar {opt}:</span>
+                                                        {imgVal && (
+                                                          <button 
+                                                            type="button" 
+                                                            onClick={() => imgSetter("")}
+                                                            className="text-[8px] text-rose-500 font-extrabold uppercase hover:underline"
+                                                          >
+                                                            Hapus
+                                                          </button>
+                                                        )}
+                                                      </div>
+                                                      <div className="flex items-center gap-1 flex-wrap">
+                                                        <input 
+                                                          type="file" 
+                                                          accept="image/*"
+                                                          onChange={(e) => handleImageFileChange(e, imgSetter)}
+                                                          id={`edit-list-choice-img-${opt}-${q.id}`}
+                                                          className="hidden"
+                                                        />
+                                                        <label 
+                                                          htmlFor={`edit-list-choice-img-${opt}-${q.id}`}
+                                                          className="flex-1 text-center bg-slate-100 hover:bg-slate-200 rounded border border-slate-300 py-1 text-[8px] font-extrabold cursor-pointer text-slate-655 uppercase"
+                                                        >
+                                                          {imgVal ? "Ubah" : "+ Gbr"}
+                                                        </label>
+                                                        {imgVal && (
+                                                          <img src={imgVal} alt="img preview" className="h-5 w-auto rounded border" />
+                                                        )}
+                                                      </div>
+                                                      {imgVal && (
+                                                        <div className="pt-1">
+                                                          <select
+                                                            value={imgPosVal}
+                                                            onChange={(e) => imgPosSetter(e.target.value as "above" | "below")}
+                                                            className="w-full text-[8.5px] bg-slate-50 border border-slate-300 rounded px-1 py-0.5 text-slate-700 font-extrabold focus:outline-none"
+                                                          >
+                                                            <option value="above">Di Atas Teks</option>
+                                                            <option value="below">Di Bawah Teks</option>
+                                                          </select>
+                                                        </div>
+                                                      )}
+                                                    </div>
                                                   </div>
                                                 );
                                               })}
                                             </div>
 
+                                            {/* Key and Discussion row */}
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                               <div>
                                                 <label className="block text-[9px] font-bold text-slate-500 uppercase mb-1">Kunci Jawaban</label>
                                                 <select
                                                   value={editQCorrectOption}
                                                   onChange={(e) => setEditQCorrectOption(e.target.value as any)}
-                                                  className="w-full bg-white border border-slate-300 rounded p-1 text-xs text-slate-800 focus:outline-none"
+                                                  className="w-full bg-white border border-slate-300 rounded-lg p-1.5 text-xs text-slate-800 focus:outline-none"
                                                 >
                                                   <option value="A">Pilihan A</option>
                                                   <option value="B">Pilihan B</option>
@@ -4248,41 +4454,89 @@ Presiden meresmikan kota Nusantara sebagai IKN baru Republik Indonesia.
                                               <div className="md:col-span-2">
                                                 <label className="block text-[9px] font-bold text-slate-500 uppercase mb-1">Pembahasan (Argumentasi Jawaban)</label>
                                                 <textarea
-                                                  rows={3}
+                                                  rows={2}
                                                   value={editQExplanation}
                                                   onChange={(e) => setEditQExplanation(e.target.value)}
-                                                  className="w-full bg-white p-2 rounded border border-slate-300 text-xs text-slate-800 focus:outline-none"
+                                                  className="w-full bg-white p-2 rounded-lg border border-slate-300 text-xs text-slate-800 focus:outline-none"
                                                   placeholder="Analisis penyelesaian soal (dapat menggunakan Enter)..."
                                                 />
                                               </div>
                                             </div>
                                           </div>
                                         ) : (
-                                          <div className="space-y-2 text-slate-750 font-sans text-left">
-                                            <p className="font-extrabold text-slate-900 whitespace-pre-wrap">{q.questionText}</p>
-                                            
-                                            {q.questionImage && (
-                                              <img src={q.questionImage} alt="question illustration" className="max-h-36 rounded border my-2 block" />
-                                            )}
+                                          <div className="space-y-3.5 text-slate-755 font-sans text-left bg-slate-50/30 p-3 rounded-2xl border border-dashed border-slate-250">
+                                            {/* Question Text and relative image position */}
+                                            <div className="flex flex-col gap-3">
+                                              {q.questionImage && q.questionImagePosition === "above" && (
+                                                <div className="bg-white border border-slate-200 p-2.5 rounded-xl max-w-sm">
+                                                  <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider block mb-1">Gambar Lampiran (Atas):</span>
+                                                  <img src={q.questionImage} alt="question illustration" className="max-h-32 w-auto object-contain rounded" />
+                                                </div>
+                                              )}
+                                              
+                                              <p className="font-extrabold text-slate-900 whitespace-pre-wrap leading-relaxed">{q.questionText}</p>
+                                              
+                                              {q.questionImage && q.questionImagePosition !== "above" && (
+                                                <div className="bg-white border border-slate-200 p-2.5 rounded-xl max-w-sm">
+                                                  <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider block mb-1">Gambar Lampiran (Bawah):</span>
+                                                  <img src={q.questionImage} alt="question illustration" className="max-h-32 w-auto object-contain rounded" />
+                                                </div>
+                                              )}
+                                            </div>
 
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 pt-1 font-sans">
+                                            {/* Option Choices with relative image positions */}
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-1">
                                               {["A", "B", "C", "D", "E"].map((opt) => {
                                                 const isCorrect = q.correctOption === opt;
                                                 const optText = q.options[opt as keyof typeof q.options];
+                                                const optImg = q.optionImages ? q.optionImages[opt] : undefined;
+                                                const optImgPos = q.optionImagePositions ? q.optionImagePositions[opt] : "below";
+
                                                 return (
-                                                  <div key={opt} className={`p-2 rounded-lg border text-[11px] ${isCorrect ? "bg-emerald-50 border-emerald-300 text-emerald-800 font-extrabold shadow-sm" : "bg-white border-slate-200 text-slate-650"}`}>
-                                                    <span className="font-black mr-1 text-[#0F4C81]">{opt}.</span> {optText || <span className="italic text-slate-400">Kosong</span>}
+                                                  <div 
+                                                    key={opt} 
+                                                    className={`p-3 rounded-xl border text-[11px] flex flex-col gap-2 ${
+                                                      isCorrect 
+                                                        ? "bg-emerald-50 border-emerald-300 text-emerald-950 font-bold shadow-xs" 
+                                                        : "bg-white border-slate-200 text-slate-650"
+                                                    }`}
+                                                  >
+                                                    <div className="flex items-center gap-1.5 border-b border-dashed border-slate-200 pb-1 w-full text-[10px]">
+                                                      <span className={`w-4 h-4 rounded-full font-black flex items-center justify-center text-[9px] ${isCorrect ? "bg-emerald-600 text-white" : "bg-slate-100 text-slate-700"}`}>
+                                                        {opt}
+                                                      </span>
+                                                      <span className="font-semibold uppercase text-[9px] text-slate-400">PILIHAN {opt}</span>
+                                                    </div>
+
+                                                    {/* Option image ABOVE choice text */}
+                                                    {optImg && optImgPos === "above" && (
+                                                      <div className="bg-slate-50 p-1 rounded border border-slate-200 self-start">
+                                                        <img src={optImg} alt={`Lampiran ${opt}`} className="max-h-20 w-auto rounded object-contain" />
+                                                      </div>
+                                                    )}
+
+                                                    <span className="leading-relaxed break-words">{optText || <span className="italic text-slate-400">Kosong</span>}</span>
+
+                                                    {/* Option image BELOW choice text */}
+                                                    {optImg && optImgPos !== "above" && (
+                                                      <div className="bg-slate-50 p-1 rounded border border-slate-200 self-start">
+                                                        <img src={optImg} alt={`Lampiran ${opt}`} className="max-h-20 w-auto rounded object-contain" />
+                                                      </div>
+                                                    )}
                                                   </div>
                                                 );
                                               })}
                                             </div>
 
-                                            <div className="bg-orange-50/50 border border-orange-200 p-2.5 rounded-lg text-[11px] text-slate-700">
-                                              <p className="font-bold text-[#F58220] flex items-center gap-1.5 text-left">
+                                            <div className="bg-orange-50/50 border border-orange-200 p-2.5 rounded-xl text-[11px] text-slate-700 space-y-1">
+                                              <p className="font-extrabold text-[#F58220] flex items-center gap-1.5 text-left text-[11.5px]">
                                                 <i className="fa-solid fa-circle-check text-emerald-600"></i>
-                                                <span>Kunci Jawaban: Pilihan {q.correctOption}</span>
+                                                <span>Kunci Jawaban Resmi: Pilihan {q.correctOption}</span>
                                               </p>
-                                              <p className="mt-1.5 text-slate-650 text-left whitespace-pre-wrap leading-relaxed border-t border-orange-100 pt-1.5"><strong className="text-slate-850 text-[10.5px] block mb-1">Pembahasan & Analisis Soal:</strong>{q.explanation || "-"}</p>
+                                              <p className="border-t border-orange-100 pt-1.5 text-slate-650 text-left whitespace-pre-wrap leading-relaxed">
+                                                <strong className="text-slate-800 text-[10.5px] block mb-0.5">Pembahasan & Analisis Soal:</strong>
+                                                {q.explanation || "-"}
+                                              </p>
                                             </div>
                                           </div>
                                         )}
