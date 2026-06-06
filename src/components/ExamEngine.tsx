@@ -321,19 +321,18 @@ export default function ExamEngine({ pkg, subExamName, questions, onCancel, onSu
                            {/* Question Text & Positional Image Layout */}
               <div className="bg-slate-50 p-3.5 sm:p-5 rounded-2xl border border-slate-200 shadow-inner flex flex-col gap-4">
                 {currentQ.questionImage && currentQ.questionImagePosition === "above" && (
-                  <div className="bg-white border border-slate-250 p-3 rounded-xl max-w-lg shadow-sm">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-2">Gbr Lampiran Pertanyaan:</span>
+                  <div className="max-w-lg">
                     <img 
                       src={currentQ.questionImage} 
                       alt="Lampiran Soal" 
-                      className="max-h-64 w-auto object-contain rounded"
+                      className="max-h-64 w-auto object-contain rounded border border-slate-200 shadow-sm"
                       referrerPolicy="no-referrer"
                     />
                   </div>
                 )}
 
                 {currentQ.questionImage && currentQ.questionImagePosition === "middle" ? (
-                  <div className="space-y-4">
+                  <div className="space-y-2.5">
                     {(() => {
                       const [part1, part2] = splitTextAtMiddle(currentQ.questionText);
                       return (
@@ -341,12 +340,11 @@ export default function ExamEngine({ pkg, subExamName, questions, onCancel, onSu
                           <p className="text-xs sm:text-sm text-slate-800 font-medium whitespace-pre-wrap leading-relaxed">
                             {part1}
                           </p>
-                          <div className="bg-white border border-slate-250 p-3 rounded-xl max-w-lg shadow-sm">
-                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-2">Gbr Lampiran Pertanyaan:</span>
+                          <div className="max-w-lg py-1">
                             <img 
                               src={currentQ.questionImage} 
                               alt="Lampiran Soal" 
-                              className="max-h-64 w-auto object-contain rounded"
+                              className="max-h-64 w-auto object-contain rounded border border-slate-200 shadow-sm"
                               referrerPolicy="no-referrer"
                             />
                           </div>
@@ -366,12 +364,11 @@ export default function ExamEngine({ pkg, subExamName, questions, onCancel, onSu
                 )}
 
                 {currentQ.questionImage && currentQ.questionImagePosition !== "above" && currentQ.questionImagePosition !== "middle" && (
-                  <div className="bg-white border border-slate-250 p-3 rounded-xl max-w-lg shadow-sm">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-2">Gbr Lampiran Pertanyaan:</span>
+                  <div className="max-w-lg">
                     <img 
                       src={currentQ.questionImage} 
                       alt="Lampiran Soal" 
-                      className="max-h-64 w-auto object-contain rounded"
+                      className="max-h-64 w-auto object-contain rounded border border-slate-200 shadow-sm"
                       referrerPolicy="no-referrer"
                     />
                   </div>

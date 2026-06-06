@@ -4516,22 +4516,20 @@ Presiden meresmikan kota Nusantara sebagai IKN baru Republik Indonesia.
                                             {/* Question Text and relative image position */}
                                             <div className="flex flex-col gap-3">
                                               {q.questionImage && q.questionImagePosition === "above" && (
-                                                <div className="bg-white border border-slate-200 p-2.5 rounded-xl max-w-sm">
-                                                  <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider block mb-1">Gambar Lampiran (Atas):</span>
-                                                  <img src={q.questionImage} alt="question illustration" className="max-h-32 w-auto object-contain rounded" />
+                                                <div className="max-w-sm">
+                                                  <img src={q.questionImage} alt="question illustration" className="max-h-32 w-auto object-contain rounded border border-slate-200 shadow-sm" />
                                                 </div>
                                               )}
                                               
                                               {q.questionImage && q.questionImagePosition === "middle" ? (
-                                                <div className="space-y-2">
+                                                <div className="space-y-1.5">
                                                   {(() => {
                                                     const [part1, part2] = splitTextAtMiddle(q.questionText);
                                                     return (
                                                       <>
                                                         <p className="font-extrabold text-slate-900 whitespace-pre-wrap leading-relaxed">{part1}</p>
-                                                        <div className="bg-white border border-slate-200 p-2.5 rounded-xl max-w-sm my-1.5">
-                                                          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider block mb-1">Gambar Lampiran (Tengah):</span>
-                                                          <img src={q.questionImage} alt="question illustration" className="max-h-32 w-auto object-contain rounded" />
+                                                        <div className="max-w-sm py-0.5">
+                                                          <img src={q.questionImage} alt="question illustration" className="max-h-32 w-auto object-contain rounded border border-slate-200 shadow-sm" />
                                                         </div>
                                                         {part2 && <p className="font-extrabold text-slate-900 whitespace-pre-wrap leading-relaxed">{part2}</p>}
                                                       </>
@@ -4543,9 +4541,8 @@ Presiden meresmikan kota Nusantara sebagai IKN baru Republik Indonesia.
                                               )}
                                               
                                               {q.questionImage && q.questionImagePosition !== "above" && q.questionImagePosition !== "middle" && (
-                                                <div className="bg-white border border-slate-200 p-2.5 rounded-xl max-w-sm">
-                                                  <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider block mb-1">Gambar Lampiran (Bawah):</span>
-                                                  <img src={q.questionImage} alt="question illustration" className="max-h-32 w-auto object-contain rounded" />
+                                                <div className="max-w-sm">
+                                                  <img src={q.questionImage} alt="question illustration" className="max-h-32 w-auto object-contain rounded border border-slate-200 shadow-sm" />
                                                 </div>
                                               )}
                                             </div>

@@ -805,106 +805,73 @@ export default function StudentDashboard({
                       <span className="text-[10px] text-slate-400 font-medium">Klik per paket untuk langsung memasuki simulasi CBT</span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                       {filteredPackages.map((pkg, idx) => {
                         const isAllSubExamsCompleted = pkg.subExams.every(
                           sub => attempts.some(att => att.examId === pkg.id && att.subExamName === sub.name && att.status === "SUBMITTED")
                         );
                         const isPkgLocked = locks[pkg.id] === true || isAllSubExamsCompleted;
-                        // Determine custom background gradient from color map or index rotation
-                        const bgGrad = packageColorMap[pkg.id] || packageGradients[idx % packageGradients.length];
+                        // Determine custom background gradient from color map or solid premium default
+                        const bgGrad = packageColorMap[pkg.id] || "from-slate-800 via-[#103D67] to-[#0A2640]";
                         
                         return (
                           <div
                             key={pkg.id}
-                            className={`rounded-2xl shadow-md border border-white/15 overflow-hidden flex flex-col justify-between transition-all duration-300 ${
-                              isPkgLocked ? "grayscale border-slate-300 bg-slate-100 text-slate-500 shadow-none hover:translate-y-0" : "bg-gradient-to-br " + bgGrad + " text-white hover:-translate-y-1 hover:shadow-xl"
+                            className={`rounded-xl shadow border border-white/10 overflow-hidden flex flex-col justify-between transition-all duration-300 ${
+                              isPkgLocked ? "grayscale border-slate-300 bg-slate-100 text-slate-500 shadow-none hover:translate-y-0" : "bg-gradient-to-br " + bgGrad + " text-white hover:-translate-y-0.5 hover:shadow-lg"
                             }`}
                           >
-                            <div className="p-6 space-y-3">
+                            <div className="p-4 sm:p-5 space-y-2.5">
                               <div className="flex justify-between items-center">
-                                <span className={`text-[10px] font-bold uppercase px-2.5 py-1 rounded-md ${
-                                  isPkgLocked ? "bg-slate-300 text-slate-600" : "bg-white/20 text-white"
+                                <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded ${
+                                  isPkgLocked ? "bg-slate-300 text-slate-600" : "bg-white/15 text-white/90"
                                 }`}>
                                   {pkg.category}
                                 </span>
                                 {isAllSubExamsCompleted ? (
-                                  <span className="text-xs text-emerald-850 font-bold bg-emerald-100/90 px-2.5 py-1 rounded-md flex items-center gap-1 shadow-sm">
-                                    <i className="fa-solid fa-circle-check text-[10px]"></i> LENGKAP & DIKUNCI
+                                  <span className="text-[9px] text-emerald-850 font-black bg-emerald-100/95 px-2 py-0.5 rounded flex items-center gap-1">
+                                    <i className="fa-solid fa-circle-check text-[8px]"></i> KUNCI EMAS
                                   </span>
                                 ) : isPkgLocked && (
-                                  <span className="text-xs text-red-650 font-bold bg-red-100/80 px-2.5 py-1 rounded-md flex items-center gap-1 shadow-sm">
-                                    <i className="fa-solid fa-lock text-[10px]"></i> TERKUNCI ADMIN
+                                  <span className="text-[9px] text-red-650 font-black bg-red-100/90 px-2 py-0.5 rounded flex items-center gap-1">
+                                    <i className="fa-solid fa-lock text-[8px]"></i> DIKUNCI
                                   </span>
                                 )}
                               </div>
 
-                              <h4 className="text-base font-bold tracking-tight">{pkg.name}</h4>
-                              <p className={`text-xs leading-relaxed ${isPkgLocked ? "text-slate-400" : "text-white/85"}`}>
-                                {pkg.description}
-                              </p>
+                              <div>
+                                <h4 className="text-sm font-bold tracking-tight text-white leading-snug">{pkg.name}</h4>
+                                <p className={`text-[11px] leading-relaxed line-clamp-2 mt-1 ${isPkgLocked ? "text-slate-400" : "text-white/85"}`}>
+                                  {pkg.description}
+                                </p>
+                              </div>
 
-                              {/* Sub-exam parameters & nested lock mechanism check */}
-                              <div className="pt-3 border-t border-white/10 space-y-1.5">
-                                <p className="text-[10px] font-bold opacity-75">STRUKTUR SUB-UJIAN:</p>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {pkg.subExams.map((sub, sIdx) => {
-                                    const isSubCompleted = attempts.some(
-                                      att => att.examId === pkg.id && att.subExamName === sub.name && att.status === "SUBMITTED"
-                                    );
-                                    const isSubLocked = locks[sub.name] === true || isSubCompleted;
-                                    return (
-                                      <span
-                                        key={sIdx}
-                                        className={`text-[9px] px-2 py-0.5 rounded font-semibold flex items-center gap-1 ${
-                                          isSubCompleted
-                                            ? "bg-emerald-200/90 text-emerald-800 border border-emerald-300/40"
-                                            : isSubLocked 
-                                              ? "bg-red-200/90 text-red-700 line-through decoration-red-700 decoration-1"
-                                              : isPkgLocked 
-                                                ? "bg-slate-200 text-slate-500"
-                                                : "bg-white/15 text-white/90 border border-white/10"
-                                        }`}
-                                      >
-                                        {isSubCompleted ? (
-                                          <i className="fa-solid fa-check text-[8px]"></i>
-                                        ) : isSubLocked ? (
-                                          <i className="fa-solid fa-lock text-[8px]"></i>
-                                        ) : null}
-                                        {sub.name} ({sub.durationMinutes}m)
-                                      </span>
-                                    );
-                                  })}
+                              <div className="flex items-center justify-between text-[10px] font-mono border-t border-white/10 pt-2.5 mt-1">
+                                <div className="flex items-center gap-2 opacity-85">
+                                  <span>{pkg.totalDurationMinutes} Mnt</span>
+                                  <span>&bull;</span>
+                                  <span>{pkg.totalQuestions} Soal</span>
                                 </div>
-                              </div>
-                            </div>
 
-                            {/* Card bottom bar */}
-                            <div className="p-4 bg-black/15 border-t border-white/5 flex items-center justify-between text-xs font-mono">
-                              <div className="flex items-center gap-3">
-                                <span>{pkg.totalDurationMinutes} Mnt</span>
-                                <span>&bull;</span>
-                                <span>{pkg.totalQuestions} Soal</span>
+                                {isPkgLocked && !isAllSubExamsCompleted ? (
+                                  <button
+                                    disabled
+                                    className="bg-slate-300 text-slate-500 font-bold text-[10px] py-1 px-2.5 rounded cursor-not-allowed flex items-center gap-1 select-none"
+                                  >
+                                    <i className="fa-solid fa-lock text-[8px]"></i> Tutup
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => {
+                                      setSelectedPkgForSubExams(pkg);
+                                    }}
+                                    className="bg-[#F58220] hover:bg-[#e07116] text-white font-black text-[10px] py-1 px-3 rounded shadow-sm border-b border-b-amber-800 transition-all cursor-pointer flex items-center gap-1"
+                                  >
+                                    <span>Buka</span>
+                                    <i className="fa-solid fa-chevron-right text-[8px]"></i>
+                                  </button>
+                                )}
                               </div>
-
-                              {isPkgLocked && !isAllSubExamsCompleted ? (
-                                <button
-                                  disabled
-                                  className="bg-slate-300 text-slate-500 font-bold text-xs py-1.5 px-4 rounded-lg cursor-not-allowed flex items-center gap-1 select-none"
-                                >
-                                  <i className="fa-solid fa-lock text-[10px]"></i> Non-aktif
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={() => {
-                                    setSelectedPkgForSubExams(pkg);
-                                  }}
-                                  className="bg-[#F58220] hover:bg-[#e07116] text-white font-bold text-xs py-2 px-4 rounded-lg shadow-sm border-b-2 border-b-amber-800 transition-all active:scale-[0.98] cursor-pointer flex items-center gap-1"
-                                >
-                                  <span>Buka Rincian Paket</span>
-                                  <i className="fa-solid fa-arrow-right text-[10px] ml-0.5"></i>
-                                </button>
-                              )}
                             </div>
                           </div>
                         );
