@@ -274,8 +274,8 @@ export default function StudentDashboard({
 
   const loadDatabaseState = () => {
     // Sync packages, questions, attempts, and locks
-    const stPkg = localStorage.getItem("KATA_KITA_PACKAGES");
     let currentPkgs = initialPackages;
+    const stPkg = localStorage.getItem("KATA_KITA_PACKAGES");
     if (stPkg) {
       currentPkgs = JSON.parse(stPkg);
       setPackages(currentPkgs);
@@ -284,8 +284,11 @@ export default function StudentDashboard({
     }
 
     const stQst = localStorage.getItem("KATA_KITA_QUESTIONS");
-    if (stQst) setQuestions(JSON.parse(stQst));
-    else setQuestions(initialQuestions);
+    if (stQst) {
+      setQuestions(JSON.parse(stQst));
+    } else {
+      setQuestions(initialQuestions);
+    }
 
     const stAtt = localStorage.getItem("KATA_KITA_ATTEMPTS");
     if (stAtt) {
@@ -328,6 +331,19 @@ export default function StudentDashboard({
       localStorage.removeItem("KATA_KITA_VIEW_SUB_PKG");
     }
   }, [selectedPkgForSubExams]);
+
+  // Synchronize local states with real-time Firestore props passed down from parent wrapper
+  useEffect(() => {
+    if (initialPackages && initialPackages.length > 0) {
+      setPackages(initialPackages);
+    }
+  }, [initialPackages]);
+
+  useEffect(() => {
+    if (initialQuestions && initialQuestions.length > 0) {
+      setQuestions(initialQuestions);
+    }
+  }, [initialQuestions]);
 
   const rotateQuote = () => {
     const rIdx = Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length);

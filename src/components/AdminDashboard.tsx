@@ -696,7 +696,20 @@ JAWABAN : D`
       unsubUsers();
       unsubLocks();
     };
-  }, [initialPackages, initialQuestions]);
+  }, []);
+
+  // Synchronize local states with real-time Firestore props passed Down from parent wrapper
+  useEffect(() => {
+    if (initialPackages && initialPackages.length > 0) {
+      setPackages(initialPackages);
+    }
+  }, [initialPackages]);
+
+  useEffect(() => {
+    if (initialQuestions && initialQuestions.length > 0) {
+      setQuestions(initialQuestions);
+    }
+  }, [initialQuestions]);
 
   const handleConnectSheets = async () => {
     setSheetsFeedback(null);
@@ -1500,12 +1513,18 @@ JAWABAN : D`
     }
 
     const stPkg = localStorage.getItem("KATA_KITA_PACKAGES");
-    if (stPkg) setPackages(JSON.parse(stPkg));
-    else setPackages(initialPackages);
+    if (stPkg) {
+      setPackages(JSON.parse(stPkg));
+    } else {
+      setPackages(initialPackages);
+    }
 
     const stQst = localStorage.getItem("KATA_KITA_QUESTIONS");
-    if (stQst) setQuestions(JSON.parse(stQst));
-    else setQuestions(initialQuestions);
+    if (stQst) {
+      setQuestions(JSON.parse(stQst));
+    } else {
+      setQuestions(initialQuestions);
+    }
 
     const registryRaw = localStorage.getItem("KATA_KITA_USER_REGISTRY");
     if (registryRaw) {

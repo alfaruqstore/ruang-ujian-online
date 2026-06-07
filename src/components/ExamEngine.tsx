@@ -200,7 +200,7 @@ export default function ExamEngine({ pkg, subExamName, questions, onCancel, onSu
     } else if (ans?.answer) {
       return base + "bg-[#2ECC71] hover:bg-emerald-600 text-white";
     } else {
-      return base + "bg-white hover:bg-slate-50 text-slate-700";
+      return base + "bg-red-500 hover:bg-red-650 text-white border-red-650 shadow-sm";
     }
   };
 
@@ -294,8 +294,8 @@ export default function ExamEngine({ pkg, subExamName, questions, onCancel, onSu
                   <span>Ragu-Ragu</span>
                 </div>
                 <div className="flex items-center gap-1.5 font-sans col-span-2">
-                  <div className="h-3 w-3 bg-white rounded border border-slate-350"></div>
-                  <span>Belum Dijawab (Slate)</span>
+                  <div className="h-3 w-3 bg-red-500 rounded border border-red-650 shrink-0"></div>
+                  <span>Belum Dijawab (Merah)</span>
                 </div>
               </div>
             </div>
@@ -539,8 +539,8 @@ export default function ExamEngine({ pkg, subExamName, questions, onCancel, onSu
                   <span>Ragu-Ragu</span>
                 </div>
                 <div className="flex items-center gap-1.5 font-sans col-span-2">
-                  <div className="h-3 w-3 bg-white rounded border border-slate-350"></div>
-                  <span>Belum Dijawab (Slate)</span>
+                  <div className="h-3 w-3 bg-red-500 rounded border border-red-650 shrink-0"></div>
+                  <span>Belum Dijawab (Merah)</span>
                 </div>
               </div>
             </div>
