@@ -5,6 +5,7 @@
 
 import React, { useState } from "react";
 import { User as UserType } from "../types";
+import { setFirebaseUser } from "../lib/firebaseStore";
 
 interface LoginProps {
   onLoginSuccess: (user: UserType) => void;
@@ -134,6 +135,7 @@ export default function Login({ onLoginSuccess, onGoBack }: LoginProps) {
 
         registry.push(newUser);
         localStorage.setItem("KATA_KITA_USER_REGISTRY", JSON.stringify(registry));
+        setFirebaseUser(newUser);
         
         // Show success modal, do not directly enter dashboard, let them login manually!
         setSuccessModal(true);

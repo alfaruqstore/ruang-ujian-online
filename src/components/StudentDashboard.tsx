@@ -11,6 +11,13 @@ import {
   logoutGoogleSheets, 
   exportToGoogleSheets 
 } from "../lib/googleSheets";
+import { 
+  subscribePackages, 
+  subscribeQuestions, 
+  subscribeAttempts, 
+  subscribeLocks,
+  setFirebaseLocks
+} from "../lib/firebaseStore";
 
 interface StudentDashboardProps {
   user: User;
@@ -142,10 +149,27 @@ export default function StudentDashboard({
   const [studentIsSyncingSheets, setStudentIsSyncingSheets] = useState(false);
   const [studentSheetsFeedback, setStudentSheetsFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
-  // Initial Sync and Random Quote selection
+  // Initial Sync and Random Quote selection in real-time
   useEffect(() => {
     loadDatabaseState();
     rotateQuote();
+
+    const unsubPkgs = subscribePackages((pkgs) => {
+      setPackages(pkgs);
+    });
+
+    const unsubQs = subscribeQuestions((qs) => {
+      setQuestions(qs);
+    });
+
+    const unsubAttempts = subscribeAttempts((atts) => {
+      setAttempts(atts.filter(a => a.userId === user.id));
+    });
+
+    const unsubLocks = subscribeLocks((lkMap) => {
+      setLocks(lkMap);
+    });
+
     initSheetsAuth(
       (user, token) => {
         setStudentGUser(user);
@@ -154,6 +178,13 @@ export default function StudentDashboard({
         setStudentGUser(null);
       }
     );
+
+    return () => {
+      unsubPkgs();
+      unsubQs();
+      unsubAttempts();
+      unsubLocks();
+    };
   }, []);
 
   const handleStudentConnectSheets = async () => {
@@ -892,6 +923,7 @@ export default function StudentDashboard({
                           const updatedLocks = { ...locks, [selectedPkgForSubExams.id]: true };
                           localStorage.setItem("KATA_KITA_LOCKS", JSON.stringify(updatedLocks));
                           setLocks(updatedLocks);
+                          setFirebaseLocks(updatedLocks);
                         }
                         setSelectedPkgForSubExams(null);
                       }}

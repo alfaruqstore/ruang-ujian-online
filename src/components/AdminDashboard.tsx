@@ -15,6 +15,14 @@ import {
   ensureSheetTabExists
 } from "../lib/googleSheets";
 import { User as FirebaseUser } from "firebase/auth";
+import { 
+  subscribePackages, 
+  subscribeQuestions, 
+  subscribeAttempts, 
+  subscribeUserRegistry, 
+  subscribeLocks,
+  setFirebaseLocks
+} from "../lib/firebaseStore";
 
 export const getPackageColorStyles = (index: number) => {
   const schemes = [
@@ -134,6 +142,7 @@ interface AdminDashboardProps {
   onUpdateAttempts?: (updatedAttempts: any[]) => void;
   onUpdateQuestions?: (updatedQuestions: Question[]) => void;
   onUpdateUser?: (updatedUser: any) => void;
+  onUpdateUserRegistry?: (updatedUserRegistry: any[]) => void;
   themeId?: string;
   onThemeChange?: (themeId: string) => void;
 }
@@ -185,6 +194,7 @@ export default function AdminDashboard({
   onUpdateAttempts,
   onUpdateQuestions,
   onUpdateUser,
+  onUpdateUserRegistry,
   themeId = "ocean",
   onThemeChange
 }: AdminDashboardProps) {
@@ -533,7 +543,11 @@ JAWABAN : D`
           }
           return u;
         });
-        localStorage.setItem("KATA_KITA_USER_REGISTRY", JSON.stringify(updatedReg));
+        if (onUpdateUserRegistry) {
+          onUpdateUserRegistry(updatedReg);
+        } else {
+          localStorage.setItem("KATA_KITA_USER_REGISTRY", JSON.stringify(updatedReg));
+        }
       } catch (e) {
         console.error("Failed to update registry:", e);
       }
@@ -622,9 +636,17 @@ JAWABAN : D`
     }
   };
 
-  // Load locks and databases
+  // Load locks and databases in real-time
   useEffect(() => {
     loadDatabaseState();
+
+    const unsubUsers = subscribeUserRegistry((users) => {
+      setRegisteredStudents(users);
+    });
+
+    const unsubLocks = subscribeLocks((lkMap) => {
+      setLocks(lkMap);
+    });
 
     // Check local storage for persistent Google User for robust survival
     try {
@@ -669,6 +691,11 @@ JAWABAN : D`
     } catch (e) {
       console.error(e);
     }
+
+    return () => {
+      unsubUsers();
+      unsubLocks();
+    };
   }, [initialPackages, initialQuestions]);
 
   const handleConnectSheets = async () => {
@@ -992,7 +1019,11 @@ JAWABAN : D`
     });
 
     setRegisteredStudents(updated);
-    localStorage.setItem("KATA_KITA_USER_REGISTRY", JSON.stringify(updated));
+    if (onUpdateUserRegistry) {
+      onUpdateUserRegistry(updated);
+    } else {
+      localStorage.setItem("KATA_KITA_USER_REGISTRY", JSON.stringify(updated));
+    }
     setEditingStudentId(null);
     setSuccessMsg("Berhasil memperbarui data registrasi siswa!");
   };
@@ -1001,7 +1032,11 @@ JAWABAN : D`
     if (confirm("Apakah Anda yakin ingin menghapus akun registrasi siswa ini? Siswa bersangkutan tidak akan bisa login lagi.")) {
       const updated = registeredStudents.filter(u => u.id !== studentId);
       setRegisteredStudents(updated);
-      localStorage.setItem("KATA_KITA_USER_REGISTRY", JSON.stringify(updated));
+      if (onUpdateUserRegistry) {
+        onUpdateUserRegistry(updated);
+      } else {
+        localStorage.setItem("KATA_KITA_USER_REGISTRY", JSON.stringify(updated));
+      }
       setSuccessMsg("Berhasil menghapus akun registrasi siswa dari database!");
     }
   };
@@ -1031,7 +1066,11 @@ JAWABAN : D`
 
     const updated = [...registeredStudents, newStudent];
     setRegisteredStudents(updated);
-    localStorage.setItem("KATA_KITA_USER_REGISTRY", JSON.stringify(updated));
+    if (onUpdateUserRegistry) {
+      onUpdateUserRegistry(updated);
+    } else {
+      localStorage.setItem("KATA_KITA_USER_REGISTRY", JSON.stringify(updated));
+    }
     
     // Clear inputs
     setNewStudentFullname("");
@@ -1150,7 +1189,11 @@ JAWABAN : D`
           }
           return u;
         });
-        localStorage.setItem("KATA_KITA_USER_REGISTRY", JSON.stringify(updatedReg));
+        if (onUpdateUserRegistry) {
+          onUpdateUserRegistry(updatedReg);
+        } else {
+          localStorage.setItem("KATA_KITA_USER_REGISTRY", JSON.stringify(updatedReg));
+        }
       } catch (e) {
         console.error("Failed to update user registry:", e);
       }
@@ -2206,6 +2249,7 @@ JAWABAN : D`
     };
     setLocks(nextLocks);
     localStorage.setItem("KATA_KITA_LOCKS", JSON.stringify(nextLocks));
+    setFirebaseLocks(nextLocks);
   };
 
   const handlePkgChange = (examId: string) => {

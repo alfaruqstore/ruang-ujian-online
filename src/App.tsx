@@ -11,6 +11,19 @@ import StudentDashboard from "./components/StudentDashboard";
 import ExamEngine from "./components/ExamEngine";
 import { DEFAULT_PACKAGES, INITIAL_QUESTIONS } from "./data/initialData";
 import { ExamPackage, Question, StudentAttempt, StudentAnswers, User, APP_THEMES } from "./types";
+import { 
+  subscribePackages, 
+  subscribeQuestions, 
+  subscribeAttempts, 
+  subscribeUserRegistry, 
+  subscribeLocks,
+  batchSetFirebasePackages, 
+  batchSetFirebaseQuestions, 
+  batchSetFirebaseAttempts, 
+  setFirebaseUser, 
+  batchSetFirebaseUsers,
+  setFirebaseLocks
+} from "./lib/firebaseStore";
 
 export default function App() {
   // Navigation states: 'landing' | 'login' | 'dashboard'
@@ -32,6 +45,7 @@ export default function App() {
   const [packages, setPackages] = useState<ExamPackage[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [attempts, setAttempts] = useState<StudentAttempt[]>([]);
+  const [locks, setLocks] = useState<{ [key: string]: boolean }>({});
 
   // Active testing state
   const [activePkg, setActivePkg] = useState<ExamPackage | null>(null);
@@ -127,90 +141,115 @@ export default function App() {
     localStorage.setItem("KATA_KITA_THEME", themeId);
   }, [themeId]);
 
-  // 1. Core local storage initialization effect
+  // 1. Core Firestore Real-Time Database Subscription Effect
   useEffect(() => {
-    try {
-      // Auto-initialize the requested Firebase Config if not already configured in localStorage
-      if (!localStorage.getItem("KATA_KITA_CUSTOM_FIREBASE_CONFIG")) {
-        const defaultFirebaseSettings = {
-          apiKey: "AIzaSyCflzDIBEgyypGrrb0yLXGMdzVDIK9Db3c",
-          authDomain: "soal-ujian-online.firebaseapp.com",
-          projectId: "soal-ujian-online",
-          storageBucket: "soal-ujian-online.firebasestorage.app",
-          messagingSenderId: "583250978894",
-          appId: "1:583250978894:web:34c41246be8a954b14fb1f",
-          measurementId: "G-V30CB7QRCX"
-        };
-        localStorage.setItem("KATA_KITA_CUSTOM_FIREBASE_CONFIG", JSON.stringify(defaultFirebaseSettings));
-      }
-
-      // Load attempts and clear old history records to start with a pristine empty bank as requested
-      const schemaInitialized = localStorage.getItem("KATA_KITA_SCH_CLEARED_FINAL_V10");
-      if (!schemaInitialized) {
-        localStorage.setItem("KATA_KITA_ATTEMPTS", JSON.stringify([]));
-        localStorage.setItem("KATA_KITA_USER_REGISTRY", JSON.stringify([]));
-        localStorage.setItem("KATA_KITA_PACKAGES", JSON.stringify(DEFAULT_PACKAGES));
-        localStorage.setItem("KATA_KITA_QUESTIONS", JSON.stringify(INITIAL_QUESTIONS));
-        localStorage.setItem("KATA_KITA_SCH_CLEARED_FINAL_V10", "true");
-        setAttempts([]);
-        setPackages(DEFAULT_PACKAGES);
-        setQuestions(INITIAL_QUESTIONS);
-      } else {
-        // Load packages with offline-first support
-        const storedPackages = localStorage.getItem("KATA_KITA_PACKAGES");
-        if (storedPackages) {
-          try {
-            setPackages(JSON.parse(storedPackages));
-          } catch (e) {
-            localStorage.setItem("KATA_KITA_PACKAGES", JSON.stringify(DEFAULT_PACKAGES));
-            setPackages(DEFAULT_PACKAGES);
-          }
-        } else {
-          localStorage.setItem("KATA_KITA_PACKAGES", JSON.stringify(DEFAULT_PACKAGES));
-          setPackages(DEFAULT_PACKAGES);
-        }
-
-        // Load questions
-        const storedQuestions = localStorage.getItem("KATA_KITA_QUESTIONS");
-        if (storedQuestions) {
-          setQuestions(JSON.parse(storedQuestions));
-        } else {
-          localStorage.setItem("KATA_KITA_QUESTIONS", JSON.stringify(INITIAL_QUESTIONS));
-          setQuestions(INITIAL_QUESTIONS);
-        }
-
-        const storedAttempts = localStorage.getItem("KATA_KITA_ATTEMPTS");
-        if (storedAttempts) {
-          try {
-            setAttempts(JSON.parse(storedAttempts));
-          } catch {
-            setAttempts([]);
-          }
-        } else {
-          setAttempts([]);
-        }
-      }
-    } catch (e) {
-      console.error("Localstorage loading error:", e);
-    } finally {
-      setIsDbLoaded(true);
+    // Auto-initialize the requested Firebase Config if not already configured in localStorage
+    if (!localStorage.getItem("KATA_KITA_CUSTOM_FIREBASE_CONFIG")) {
+      const defaultFirebaseSettings = {
+        apiKey: "AIzaSyCflzDIBEgyypGrrb0yLXGMdzVDIK9Db3c",
+        authDomain: "soal-ujian-online.firebaseapp.com",
+        projectId: "soal-ujian-online",
+        storageBucket: "soal-ujian-online.firebasestorage.app",
+        messagingSenderId: "583250978894",
+        appId: "1:583250978894:web:34c41246be8a954b14fb1f",
+        measurementId: "G-V30CB7QRCX"
+      };
+      localStorage.setItem("KATA_KITA_CUSTOM_FIREBASE_CONFIG", JSON.stringify(defaultFirebaseSettings));
     }
+
+    let loadedPkgs = false;
+    let loadedQns = false;
+
+    const checkReady = () => {
+      if (loadedPkgs && loadedQns) {
+        setIsDbLoaded(true);
+      }
+    };
+
+    // Sub packages
+    const unsubPkgs = subscribePackages((pkgs) => {
+      if (pkgs.length === 0) {
+        batchSetFirebasePackages(DEFAULT_PACKAGES);
+      } else {
+        setPackages(pkgs);
+        localStorage.setItem("KATA_KITA_PACKAGES", JSON.stringify(pkgs));
+      }
+      loadedPkgs = true;
+      checkReady();
+    });
+
+    // Sub questions
+    const unsubQs = subscribeQuestions((qs) => {
+      if (qs.length === 0) {
+        batchSetFirebaseQuestions(INITIAL_QUESTIONS);
+      } else {
+        setQuestions(qs);
+        localStorage.setItem("KATA_KITA_QUESTIONS", JSON.stringify(qs));
+      }
+      loadedQns = true;
+      checkReady();
+    });
+
+    // Sub student attempts / results
+    const unsubAtts = subscribeAttempts((atts) => {
+      setAttempts(atts);
+      localStorage.setItem("KATA_KITA_ATTEMPTS", JSON.stringify(atts));
+    });
+
+    // Sub user registration accounts registry
+    const unsubUsers = subscribeUserRegistry((users) => {
+      localStorage.setItem("KATA_KITA_USER_REGISTRY", JSON.stringify(users));
+    });
+
+    // Sub global access locks
+    const unsubLocks = subscribeLocks((lkMap) => {
+      setLocks(lkMap);
+      localStorage.setItem("KATA_KITA_LOCKS", JSON.stringify(lkMap));
+    });
+
+    // Fallback timer to guarantee loading screen dismiss in slow connection
+    const fallbackTimer = setTimeout(() => {
+      setIsDbLoaded(true);
+    }, 2800);
+
+    return () => {
+      unsubPkgs();
+      unsubQs();
+      unsubAtts();
+      unsubUsers();
+      unsubLocks();
+      clearTimeout(fallbackTimer);
+    };
   }, []);
 
-  // Sync state modifications directly to local database
+  // Sync state modifications directly to centralized Firestore and isomorphic LocalStorage
   const savePackagesToDb = (updated: ExamPackage[]) => {
     localStorage.setItem("KATA_KITA_PACKAGES", JSON.stringify(updated));
     setPackages(updated);
+    batchSetFirebasePackages(updated);
   };
 
   const saveQuestionsToDb = (updated: Question[]) => {
     localStorage.setItem("KATA_KITA_QUESTIONS", JSON.stringify(updated));
     setQuestions(updated);
+    batchSetFirebaseQuestions(updated);
   };
 
   const saveAttemptsToDb = (updated: StudentAttempt[]) => {
     localStorage.setItem("KATA_KITA_ATTEMPTS", JSON.stringify(updated));
     setAttempts(updated);
+    batchSetFirebaseAttempts(updated);
+  };
+
+  const saveUserRegistryToDb = (updated: User[]) => {
+    localStorage.setItem("KATA_KITA_USER_REGISTRY", JSON.stringify(updated));
+    batchSetFirebaseUsers(updated);
+  };
+
+  const saveLocksToDb = (updatedLocks: { [key: string]: boolean }) => {
+    localStorage.setItem("KATA_KITA_LOCKS", JSON.stringify(updatedLocks));
+    setLocks(updatedLocks);
+    setFirebaseLocks(updatedLocks);
   };
 
   // Add individual custom question from Admin Manual Form
@@ -436,6 +475,7 @@ export default function App() {
               onUpdateAttempts={saveAttemptsToDb}
               onUpdateQuestions={saveQuestionsToDb}
               onUpdateUser={handleUpdateUser}
+              onUpdateUserRegistry={saveUserRegistryToDb}
               themeId={themeId}
               onThemeChange={setThemeId}
             />

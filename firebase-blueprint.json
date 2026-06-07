@@ -1,0 +1,272 @@
+{
+  "entities": {
+    "ExamPackage": {
+      "title": "ExamPackage",
+      "description": "An exam category or specific package containing metadata and sub-exams configuration",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Required package ID (e.g. EXM-UTBK)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the package"
+        },
+        "category": {
+          "type": "string",
+          "description": "Exam Category"
+        },
+        "description": {
+          "type": "string",
+          "description": "Package Description"
+        },
+        "totalDurationMinutes": {
+          "type": "number",
+          "description": "Total duration in minutes"
+        },
+        "totalQuestions": {
+          "type": "number",
+          "description": "Total number of questions"
+        },
+        "subExams": {
+          "type": "array",
+          "description": "Sub-exams configuration array list"
+        },
+        "isPremium": {
+          "type": "boolean",
+          "description": "Whether package is premium"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "category",
+        "description",
+        "totalDurationMinutes",
+        "totalQuestions",
+        "subExams"
+      ]
+    },
+    "Question": {
+      "title": "Question",
+      "description": "An individual exam question item with layout and options details",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Question unique ID"
+        },
+        "examId": {
+          "type": "string",
+          "description": "ID of parent exam package"
+        },
+        "subExamName": {
+          "type": "string",
+          "description": "Matching sub topic or sub exam name"
+        },
+        "questionText": {
+          "type": "string",
+          "description": "The exact question string content"
+        },
+        "questionImage": {
+          "type": "string",
+          "description": "Optional attachment URL or base64"
+        },
+        "questionImagePosition": {
+          "type": "string",
+          "description": "Layout placement selection"
+        },
+        "options": {
+          "type": "object",
+          "description": "Mapping from options keys A-E to string text content"
+        },
+        "optionImages": {
+          "type": "object",
+          "description": "Option images if any"
+        },
+        "optionImagePositions": {
+          "type": "object",
+          "description": "Option image alignments"
+        },
+        "correctOption": {
+          "type": "string",
+          "description": "The correct answer key option (A-E)"
+        },
+        "explanation": {
+          "type": "string",
+          "description": "Text explanation of the problem"
+        },
+        "isPublished": {
+          "type": "boolean",
+          "description": "Publish status"
+        }
+      },
+      "required": [
+        "id",
+        "examId",
+        "subExamName",
+        "questionText",
+        "options",
+        "correctOption"
+      ]
+    },
+    "StudentAttempt": {
+      "title": "StudentAttempt",
+      "description": "A progress snapshot or completed attempt matching an exam test session",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique attempt ID"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner student account ID"
+        },
+        "examId": {
+          "type": "string",
+          "description": "Related exam package id"
+        },
+        "subExamName": {
+          "type": "string",
+          "description": "Sub test being taken"
+        },
+        "startTime": {
+          "type": "string",
+          "description": "ISO start datetime timestamp"
+        },
+        "endTime": {
+          "type": "string",
+          "description": "ISO finish datetime timestamp"
+        },
+        "status": {
+          "type": "string",
+          "description": "Current status",
+          "enum": [
+            "ON_PROGRESS",
+            "SUBMITTED"
+          ]
+        },
+        "answers": {
+          "type": "object",
+          "description": "Selected answers and ragu-ragu markings metadata dict"
+        },
+        "tabSwitchViolations": {
+          "type": "number",
+          "description": "Tab violation counter"
+        },
+        "finalScore": {
+          "type": "number",
+          "description": "Calculated test score"
+        },
+        "correctCount": {
+          "type": "number",
+          "description": "Correct questions count score"
+        },
+        "incorrectCount": {
+          "type": "number",
+          "description": "Incorrect questions count score"
+        },
+        "emptyCount": {
+          "type": "number",
+          "description": "Blank option answers"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "examId",
+        "startTime",
+        "status",
+        "answers",
+        "tabSwitchViolations"
+      ]
+    },
+    "UserRegistry": {
+      "title": "UserRegistry",
+      "description": "Student or Admin account metadata details registered in the custom registry",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "User unique ID"
+        },
+        "email": {
+          "type": "string",
+          "description": "Accredited user email address"
+        },
+        "fullname": {
+          "type": "string",
+          "description": "Human name title"
+        },
+        "role": {
+          "type": "string",
+          "description": "System role",
+          "enum": [
+            "admin",
+            "student"
+          ]
+        },
+        "categoryInterest": {
+          "type": "string",
+          "description": "Chosen category indicator"
+        },
+        "password": {
+          "type": "string",
+          "description": "Hashed or plain security password string"
+        },
+        "photoUrl": {
+          "type": "string",
+          "description": "Profile picture base64"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "fullname",
+        "role"
+      ]
+    },
+    "LockState": {
+      "title": "LockState",
+      "description": "Global settings for package and sub-test access locks",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "locks": {
+          "type": "object",
+          "description": "Key value locking map status dictionary"
+        }
+      },
+      "required": [
+        "id",
+        "locks"
+      ]
+    }
+  },
+  "firestore": {
+    "/packages/{packageId}": {
+      "schema": "ExamPackage",
+      "description": "Exams & package catalog templates"
+    },
+    "/questions/{questionId}": {
+      "schema": "Question",
+      "description": "Exam target question details list"
+    },
+    "/attempts/{attemptId}": {
+      "schema": "StudentAttempt",
+      "description": "Completed or active student exam performance tracker attempts"
+    },
+    "/userRegistry/{userId}": {
+      "schema": "UserRegistry",
+      "description": "Custom verified registered account entries credentials lookup list"
+    },
+    "/locks/{lockDocId}": {
+      "schema": "LockState",
+      "description": "Global operational exam access authorization status indicators"
+    }
+  }
+}
