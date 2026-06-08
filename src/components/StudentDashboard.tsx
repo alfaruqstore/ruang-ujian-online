@@ -156,18 +156,22 @@ export default function StudentDashboard({
 
     const unsubPkgs = subscribePackages((pkgs) => {
       setPackages(pkgs);
+      localStorage.setItem("KATA_KITA_PACKAGES", JSON.stringify(pkgs));
     });
 
     const unsubQs = subscribeQuestions((qs) => {
       setQuestions(qs);
+      localStorage.setItem("KATA_KITA_QUESTIONS", JSON.stringify(qs));
     });
 
     const unsubAttempts = subscribeAttempts((atts) => {
       setAttempts(atts.filter(a => a.userId === user.id));
+      localStorage.setItem("KATA_KITA_ATTEMPTS", JSON.stringify(atts));
     });
 
     const unsubLocks = subscribeLocks((lkMap) => {
-      setLocks(lkMap);
+      setLocks(lkMap || {});
+      localStorage.setItem("KATA_KITA_LOCKS", JSON.stringify(lkMap || {}));
     });
 
     initSheetsAuth(
@@ -365,15 +369,7 @@ export default function StudentDashboard({
     }
   }, [initialAttempts, user.id]);
 
-  useEffect(() => {
-    const unsubLocks = subscribeLocks((lkMap) => {
-      setLocks(lkMap || {});
-      localStorage.setItem("KATA_KITA_LOCKS", JSON.stringify(lkMap));
-    });
-    return () => {
-      unsubLocks();
-    };
-  }, []);
+
 
   const rotateQuote = () => {
     const rIdx = Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length);
@@ -578,7 +574,7 @@ export default function StudentDashboard({
           {/* Sidebar Menu items */}
           <nav className="p-4 space-y-1.5">
             <button
-              onClick={() => { setActiveTab("beranda"); loadDatabaseState(); setSelectedPkgForSubExams(null); setIsMobileSidebarOpen(false); }}
+              onClick={() => { setActiveTab("beranda"); setSelectedPkgForSubExams(null); setIsMobileSidebarOpen(false); }}
               className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-3 cursor-pointer ${
                 activeTab === "beranda" ? "bg-[#F58220] text-white shadow-md" : "text-white/80 hover:bg-white/10"
               }`}
@@ -588,7 +584,7 @@ export default function StudentDashboard({
             </button>
 
             <button
-              onClick={() => { setActiveTab("paket"); loadDatabaseState(); setSelectedPkgForSubExams(null); setIsMobileSidebarOpen(false); }}
+              onClick={() => { setActiveTab("paket"); setSelectedPkgForSubExams(null); setIsMobileSidebarOpen(false); }}
               className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-3 cursor-pointer ${
                 activeTab === "paket" ? "bg-[#F58220] text-white shadow-md" : "text-white/80 hover:bg-white/10"
               }`}
@@ -598,7 +594,7 @@ export default function StudentDashboard({
             </button>
 
             <button
-              onClick={() => { setActiveTab("analisa"); loadDatabaseState(); setSelectedPkgForSubExams(null); setIsMobileSidebarOpen(false); }}
+              onClick={() => { setActiveTab("analisa"); setSelectedPkgForSubExams(null); setIsMobileSidebarOpen(false); }}
               className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-3 cursor-pointer ${
                 activeTab === "analisa" ? "bg-[#F58220] text-white shadow-md" : "text-white/80 hover:bg-white/10"
               }`}
@@ -608,7 +604,7 @@ export default function StudentDashboard({
             </button>
 
             <button
-              onClick={() => { setActiveTab("profil"); loadDatabaseState(); setSelectedPkgForSubExams(null); setIsMobileSidebarOpen(false); }}
+              onClick={() => { setActiveTab("profil"); setSelectedPkgForSubExams(null); setIsMobileSidebarOpen(false); }}
               className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-3 cursor-pointer ${
                 activeTab === "profil" ? "bg-[#F58220] text-white shadow-md" : "text-white/80 hover:bg-white/10"
               }`}
@@ -1563,7 +1559,7 @@ export default function StudentDashboard({
         {/* Sticky Touch Bottom Navigation Menu Bar on Mobile Screen Sizes */}
         <nav className="sticky bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] px-2 py-1.5 flex justify-around items-center lg:hidden shrink-0">
           <button
-            onClick={() => { setActiveTab("beranda"); loadDatabaseState(); setSelectedPkgForSubExams(null); }}
+            onClick={() => { setActiveTab("beranda"); setSelectedPkgForSubExams(null); }}
             className={`flex flex-col items-center gap-1 py-1 px-3 rounded-full transition-all cursor-pointer ${
               activeTab === "beranda" ? "text-[#F58220] font-black" : "text-slate-400 hover:text-slate-650"
             }`}
@@ -1573,7 +1569,7 @@ export default function StudentDashboard({
           </button>
 
           <button
-            onClick={() => { setActiveTab("paket"); loadDatabaseState(); setSelectedPkgForSubExams(null); }}
+            onClick={() => { setActiveTab("paket"); setSelectedPkgForSubExams(null); }}
             className={`flex flex-col items-center gap-1 py-1 px-3 rounded-full transition-all cursor-pointer ${
               activeTab === "paket" ? "text-[#F58220] font-black" : "text-slate-400 hover:text-slate-650"
             }`}
@@ -1583,7 +1579,7 @@ export default function StudentDashboard({
           </button>
 
           <button
-            onClick={() => { setActiveTab("analisa"); loadDatabaseState(); setSelectedPkgForSubExams(null); }}
+            onClick={() => { setActiveTab("analisa"); setSelectedPkgForSubExams(null); }}
             className={`flex flex-col items-center gap-1 py-1 px-3 rounded-full transition-all cursor-pointer ${
               activeTab === "analisa" ? "text-[#F58220] font-black" : "text-slate-400 hover:text-slate-650"
             }`}
@@ -1593,7 +1589,7 @@ export default function StudentDashboard({
           </button>
 
           <button
-            onClick={() => { setActiveTab("profil"); loadDatabaseState(); setSelectedPkgForSubExams(null); }}
+            onClick={() => { setActiveTab("profil"); setSelectedPkgForSubExams(null); }}
             className={`flex flex-col items-center gap-1 py-1 px-3 rounded-full transition-all cursor-pointer ${
               activeTab === "profil" ? "text-[#F58220] font-black" : "text-slate-400 hover:text-slate-650"
             }`}

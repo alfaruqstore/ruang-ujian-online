@@ -357,6 +357,7 @@ export default function AdminDashboard({
   const [selectedSubExam, setSelectedSubExam] = useState<string>(selectedPkg?.subExams[0]?.name || "");
 
   const [questionText, setQuestionText] = useState("");
+  const [publishManualDirectly, setPublishManualDirectly] = useState(true);
   const [correctOption, setCorrectOption] = useState<"A" | "B" | "C" | "D" | "E">("A");
   const [explanation, setExplanation] = useState("");
   const [optionA, setOptionA] = useState("");
@@ -644,10 +645,12 @@ JAWABAN : D`
 
     const unsubUsers = subscribeUserRegistry((users) => {
       setRegisteredStudents(users);
+      localStorage.setItem("KATA_KITA_USER_REGISTRY", JSON.stringify(users));
     });
 
     const unsubLocks = subscribeLocks((lkMap) => {
-      setLocks(lkMap);
+      setLocks(lkMap || {});
+      localStorage.setItem("KATA_KITA_LOCKS", JSON.stringify(lkMap || {}));
     });
 
     // Check local storage for persistent Google User for robust survival
@@ -1627,7 +1630,7 @@ JAWABAN : D`
       },
       correctOption: correctOption as "A" | "B" | "C" | "D" | "E",
       explanation: explanation || "Sesuai petunjuk manual jawaban benar.",
-      isPublished: false // Saved in Question Bank, unpublished by default
+      isPublished: publishManualDirectly
     };
 
     onAddQuestion(newQ);
@@ -1637,7 +1640,11 @@ JAWABAN : D`
     localStorage.setItem("KATA_KITA_QUESTIONS", JSON.stringify(updatedQs));
     setQuestions(updatedQs);
 
-    setSuccessMsg("Soal baru berhasil ditambahkan ke Bank Soal (Draf). Silakan terbitkan di tab 'Paket Ujian'!");
+    if (publishManualDirectly) {
+      setSuccessMsg("Soal baru berhasil ditambahkan dan langsung DITERBITKAN ke siswa CBT secara real-time!");
+    } else {
+      setSuccessMsg("Soal baru berhasil ditambahkan ke Bank Soal (Draf). Silakan terbitkan di tab 'Paket Ujian'!");
+    }
     
     // Clear
     setQuestionText("");
@@ -2371,7 +2378,7 @@ JAWABAN : D`
           {/* Navigasi Control Panels */}
           <nav className="p-4 space-y-1">
             <button
-              onClick={() => { setActiveTab("questions"); loadDatabaseState(); setIsMobileSidebarOpen(false); }}
+              onClick={() => { setActiveTab("questions"); setIsMobileSidebarOpen(false); }}
               className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold transition-all flex items-center gap-3 cursor-pointer ${
                 activeTab === "questions" ? "bg-[#0F4C81] text-white shadow" : "text-[#A0AEC0] hover:bg-white/5 hover:text-white"
               }`}
@@ -2381,7 +2388,7 @@ JAWABAN : D`
             </button>
 
             <button
-              onClick={() => { setActiveTab("bulk"); loadDatabaseState(); setIsMobileSidebarOpen(false); }}
+              onClick={() => { setActiveTab("bulk"); setIsMobileSidebarOpen(false); }}
               className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold transition-all flex items-center gap-3 cursor-pointer ${
                 activeTab === "bulk" ? "bg-[#0F4C81] text-white shadow" : "text-[#A0AEC0] hover:bg-white/5 hover:text-white"
               }`}
@@ -2391,7 +2398,7 @@ JAWABAN : D`
             </button>
 
             <button
-              onClick={() => { setActiveTab("packages"); loadDatabaseState(); setIsMobileSidebarOpen(false); }}
+              onClick={() => { setActiveTab("packages"); setIsMobileSidebarOpen(false); }}
               className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold transition-all flex items-center gap-3 cursor-pointer ${
                 activeTab === "packages" ? "bg-[#0F4C81] text-white shadow" : "text-[#A0AEC0] hover:bg-white/5 hover:text-white"
               }`}
@@ -2401,7 +2408,7 @@ JAWABAN : D`
             </button>
 
             <button
-              onClick={() => { setActiveTab("locks"); loadDatabaseState(); setIsMobileSidebarOpen(false); }}
+              onClick={() => { setActiveTab("locks"); setIsMobileSidebarOpen(false); }}
               className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold transition-all flex items-center gap-3 cursor-pointer ${
                 activeTab === "locks" ? "bg-red-700 text-white shadow" : "text-[#A0AEC0] hover:bg-white/5 hover:text-white"
               }`}
@@ -2411,7 +2418,7 @@ JAWABAN : D`
             </button>
 
             <button
-              onClick={() => { setActiveTab("results"); loadDatabaseState(); setIsMobileSidebarOpen(false); }}
+              onClick={() => { setActiveTab("results"); setIsMobileSidebarOpen(false); }}
               className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold transition-all flex items-center gap-3 cursor-pointer ${
                 activeTab === "results" ? "bg-[#0F4C81] text-white shadow" : "text-[#A0AEC0] hover:bg-white/5 hover:text-white"
               }`}
@@ -2426,7 +2433,7 @@ JAWABAN : D`
             </button>
 
             <button
-              onClick={() => { setActiveTab("sheets"); loadDatabaseState(); setIsMobileSidebarOpen(false); }}
+              onClick={() => { setActiveTab("sheets"); setIsMobileSidebarOpen(false); }}
               className={`w-full text-left px-4 py-3 rounded-lg text-xs font-bold transition-all flex items-center gap-3 cursor-pointer ${
                 activeTab === "sheets" ? "bg-emerald-600 text-white shadow" : "text-[#A0AEC0] hover:bg-white/5 hover:text-white"
               }`}
@@ -2841,10 +2848,19 @@ JAWABAN : D`
                   </div>
                 </div>
 
-                <div className="pt-2 flex justify-end">
+                <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-100 pt-4">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-[#0F4C81]">
+                    <input
+                      type="checkbox"
+                      checked={publishManualDirectly}
+                      onChange={(e) => setPublishManualDirectly(e.target.checked)}
+                      className="w-4 h-4 text-[#0F4C81] border-slate-300 rounded focus:ring-[#0F4C81] cursor-pointer"
+                    />
+                    <span>Terbitkan Langsung ke Siswa (Aktif di CBT)</span>
+                  </label>
                   <button
                     type="submit"
-                    className="bg-[#0F4C81] hover:bg-[#0c3e6a] text-white font-extrabold text-xs py-3.5 px-8 rounded-lg border-b-2 border-b-black transition-all shadow-md cursor-pointer"
+                    className="bg-[#0F4C81] hover:bg-[#0c3e6a] text-white font-extrabold text-xs py-3.5 px-8 rounded-lg border-b-2 border-b-black transition-all shadow-md cursor-pointer w-full sm:w-auto"
                   >
                     Simpan Soal Baru
                   </button>
@@ -6033,7 +6049,7 @@ Presiden meresmikan kota Nusantara sebagai IKN baru Republik Indonesia.
         {/* Sticky Touch Bottom Navigation Menu Bar on Mobile Screen Sizes */}
         <nav className="sticky bottom-0 left-0 right-0 z-40 bg-[#111827] border-t border-slate-800 shadow-[0_-4px_12px_rgba(0,0,0,0.3)] px-1 py-1.5 flex justify-around items-center lg:hidden shrink-0">
           <button
-            onClick={() => { setActiveTab("questions"); loadDatabaseState(); }}
+            onClick={() => { setActiveTab("questions"); }}
             className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all cursor-pointer ${
               activeTab === "questions" ? "text-sky-405 font-black scale-105" : "text-slate-400 hover:text-white"
             }`}
@@ -6043,7 +6059,7 @@ Presiden meresmikan kota Nusantara sebagai IKN baru Republik Indonesia.
           </button>
 
           <button
-            onClick={() => { setActiveTab("packages"); loadDatabaseState(); }}
+            onClick={() => { setActiveTab("packages"); }}
             className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all cursor-pointer ${
               activeTab === "packages" ? "text-sky-405 font-black scale-105" : "text-slate-400 hover:text-white"
             }`}
@@ -6053,7 +6069,7 @@ Presiden meresmikan kota Nusantara sebagai IKN baru Republik Indonesia.
           </button>
 
           <button
-            onClick={() => { setActiveTab("locks"); loadDatabaseState(); }}
+            onClick={() => { setActiveTab("locks"); }}
             className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all cursor-pointer ${
               activeTab === "locks" ? "text-rose-400 font-black scale-105" : "text-slate-400 hover:text-white"
             }`}
@@ -6063,7 +6079,7 @@ Presiden meresmikan kota Nusantara sebagai IKN baru Republik Indonesia.
           </button>
 
           <button
-            onClick={() => { setActiveTab("results"); loadDatabaseState(); }}
+            onClick={() => { setActiveTab("results"); }}
             className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all cursor-pointer ${
               activeTab === "results" ? "text-sky-405 font-black scale-105" : "text-slate-400 hover:text-white"
             }`}
@@ -6073,7 +6089,7 @@ Presiden meresmikan kota Nusantara sebagai IKN baru Republik Indonesia.
           </button>
 
           <button
-            onClick={() => { setActiveTab("sheets"); loadDatabaseState(); }}
+            onClick={() => { setActiveTab("sheets"); }}
             className={`flex flex-col items-center gap-1 py-1 px-2 rounded-xl transition-all cursor-pointer ${
               activeTab === "sheets" ? "text-emerald-450 font-black scale-105" : "text-slate-400 hover:text-white"
             }`}
