@@ -46,6 +46,7 @@ export default function App() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [attempts, setAttempts] = useState<StudentAttempt[]>([]);
   const [locks, setLocks] = useState<{ [key: string]: boolean }>({});
+  const [userRegistry, setUserRegistry] = useState<User[]>([]);
 
   // Active testing state
   const [activePkg, setActivePkg] = useState<ExamPackage | null>(null);
@@ -198,13 +199,45 @@ export default function App() {
 
     // Sub user registration accounts registry
     const unsubUsers = subscribeUserRegistry((users) => {
+      setUserRegistry(users);
       localStorage.setItem("KATA_KITA_USER_REGISTRY", JSON.stringify(users));
     });
 
     // Sub global access locks
-    const unsubLocks = subscribeLocks((lkMap) => {
-      setLocks(lkMap);
+    const unsubLocks = subscribeLocks((lkMap, customConfig) => {
+      setLocks(lkMap || {});
       localStorage.setItem("KATA_KITA_LOCKS", JSON.stringify(lkMap));
+      
+      // Auto-synchronize custom Firebase configuration from default database
+      if (customConfig) {
+        const localRaw = localStorage.getItem("KATA_KITA_CUSTOM_FIREBASE_CONFIG");
+        const localParsed = localRaw ? JSON.parse(localRaw) : null;
+        
+        // If local parsed matches but is missing, or is outdated, save and reload
+        if (!localParsed || localParsed.apiKey !== customConfig.apiKey) {
+          localStorage.setItem("KATA_KITA_CUSTOM_FIREBASE_CONFIG", JSON.stringify(customConfig));
+          console.log("Database configuration changed on server. Synchronizing configurations...");
+          // Reload the page to apply the fresh Firebase configuration
+          setTimeout(() => {
+            window.location.reload();
+          }, 1100);
+        }
+      } else {
+        // If there's no custom config on server, but we have a custom config locally (that doesn't match default), clear it!
+        const localRaw = localStorage.getItem("KATA_KITA_CUSTOM_FIREBASE_CONFIG");
+        if (localRaw) {
+          try {
+            const localParsed = JSON.parse(localRaw);
+            if (localParsed && localParsed.projectId !== "soal-ujian-online") {
+              localStorage.removeItem("KATA_KITA_CUSTOM_FIREBASE_CONFIG");
+              console.log("Custom config was removed on default database. Clearing local custom config...");
+              setTimeout(() => {
+                window.location.reload();
+              }, 1100);
+            }
+          } catch(e) {}
+        }
+      }
     });
 
     // Fallback timer to guarantee loading screen dismiss in slow connection
@@ -456,10 +489,10 @@ export default function App() {
         return <LandingPage onStart={() => setView("login")} />;
         
       case "login":
-        return <Login onLoginSuccess={handleLoginSuccess} onGoBack={() => setView("landing")} />;
+        return <Login onLoginSuccess={handleLoginSuccess} onGoBack={() => setView("landing")} userRegistry={userRegistry} />;
         
       case "dashboard":
-        if (!currentUser) return <Login onLoginSuccess={handleLoginSuccess} onGoBack={() => setView("landing")} />;
+        if (!currentUser) return <Login onLoginSuccess={handleLoginSuccess} onGoBack={() => setView("landing")} userRegistry={userRegistry} />;
         
         if (currentUser.role === "admin") {
           return (

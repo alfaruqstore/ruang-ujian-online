@@ -10,9 +10,10 @@ import { setFirebaseUser } from "../lib/firebaseStore";
 interface LoginProps {
   onLoginSuccess: (user: UserType) => void;
   onGoBack: () => void;
+  userRegistry?: UserType[];
 }
 
-export default function Login({ onLoginSuccess, onGoBack }: LoginProps) {
+export default function Login({ onLoginSuccess, onGoBack, userRegistry }: LoginProps) {
   const [mode, setMode] = useState<"student" | "admin">("student");
   
   // Empty inputs by default as requested
@@ -107,9 +108,14 @@ export default function Login({ onLoginSuccess, onGoBack }: LoginProps) {
         setError(`Kredensial Admin tidak valid! Silakan cek kembali username/email dan password Admin.`);
       }
     } else {
-      // Student login
-      const rawRegistry = localStorage.getItem("KATA_KITA_USER_REGISTRY");
-      let registry: UserType[] = rawRegistry ? JSON.parse(rawRegistry) : [];
+      // Student login - Prioritize live userRegistry prop from Firestore
+      let registry: UserType[] = [];
+      if (userRegistry && userRegistry.length > 0) {
+        registry = userRegistry;
+      } else {
+        const rawRegistry = localStorage.getItem("KATA_KITA_USER_REGISTRY");
+        registry = rawRegistry ? JSON.parse(rawRegistry) : [];
+      }
 
       if (isRegistering) {
         if (!fullname.trim()) {

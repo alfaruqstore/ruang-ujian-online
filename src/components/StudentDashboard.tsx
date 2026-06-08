@@ -275,27 +275,41 @@ export default function StudentDashboard({
   const loadDatabaseState = () => {
     // Sync packages, questions, attempts, and locks
     let currentPkgs = initialPackages;
-    const stPkg = localStorage.getItem("KATA_KITA_PACKAGES");
-    if (stPkg) {
-      currentPkgs = JSON.parse(stPkg);
-      setPackages(currentPkgs);
-    } else {
+    
+    // Prioritize premium live props over local database cache
+    if (initialPackages && initialPackages.length > 0) {
       setPackages(initialPackages);
+    } else {
+      const stPkg = localStorage.getItem("KATA_KITA_PACKAGES");
+      if (stPkg) {
+        currentPkgs = JSON.parse(stPkg);
+        setPackages(currentPkgs);
+      } else {
+        setPackages(initialPackages);
+      }
     }
 
-    const stQst = localStorage.getItem("KATA_KITA_QUESTIONS");
-    if (stQst) {
-      setQuestions(JSON.parse(stQst));
-    } else {
+    if (initialQuestions && initialQuestions.length > 0) {
       setQuestions(initialQuestions);
+    } else {
+      const stQst = localStorage.getItem("KATA_KITA_QUESTIONS");
+      if (stQst) {
+        setQuestions(JSON.parse(stQst));
+      } else {
+        setQuestions(initialQuestions);
+      }
     }
 
-    const stAtt = localStorage.getItem("KATA_KITA_ATTEMPTS");
-    if (stAtt) {
-      const allAtts: StudentAttempt[] = JSON.parse(stAtt);
-      setAttempts(allAtts.filter(a => a.userId === user.id));
-    } else {
+    if (initialAttempts && initialAttempts.length > 0) {
       setAttempts(initialAttempts.filter(a => a.userId === user.id));
+    } else {
+      const stAtt = localStorage.getItem("KATA_KITA_ATTEMPTS");
+      if (stAtt) {
+        const allAtts: StudentAttempt[] = JSON.parse(stAtt);
+        setAttempts(allAtts.filter(a => a.userId === user.id));
+      } else {
+        setAttempts(initialAttempts.filter(a => a.userId === user.id));
+      }
     }
 
     // Load Locks
@@ -334,16 +348,32 @@ export default function StudentDashboard({
 
   // Synchronize local states with real-time Firestore props passed down from parent wrapper
   useEffect(() => {
-    if (initialPackages && initialPackages.length > 0) {
+    if (initialPackages) {
       setPackages(initialPackages);
     }
   }, [initialPackages]);
 
   useEffect(() => {
-    if (initialQuestions && initialQuestions.length > 0) {
+    if (initialQuestions) {
       setQuestions(initialQuestions);
     }
   }, [initialQuestions]);
+
+  useEffect(() => {
+    if (initialAttempts) {
+      setAttempts(initialAttempts.filter(a => a.userId === user.id));
+    }
+  }, [initialAttempts, user.id]);
+
+  useEffect(() => {
+    const unsubLocks = subscribeLocks((lkMap) => {
+      setLocks(lkMap || {});
+      localStorage.setItem("KATA_KITA_LOCKS", JSON.stringify(lkMap));
+    });
+    return () => {
+      unsubLocks();
+    };
+  }, []);
 
   const rotateQuote = () => {
     const rIdx = Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length);
@@ -352,12 +382,16 @@ export default function StudentDashboard({
 
   // Dedicated manual refresh operation in dashboard
   const handleManualRefresh = () => {
-    loadDatabaseState();
-    rotateQuote();
+    // Clear static local caches to allow full synchronization on manual pull
+    localStorage.removeItem("KATA_KITA_PACKAGES");
+    localStorage.removeItem("KATA_KITA_QUESTIONS");
+    localStorage.removeItem("KATA_KITA_LOCKS");
+    localStorage.removeItem("KATA_KITA_ATTEMPTS");
+
     setRefreshNotification(true);
     setTimeout(() => {
-      setRefreshNotification(false);
-    }, 2500);
+      window.location.reload();
+    }, 500);
   };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

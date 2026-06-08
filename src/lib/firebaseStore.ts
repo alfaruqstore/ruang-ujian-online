@@ -35,6 +35,15 @@ try {
 const app = initializeApp(activeConfig);
 export const db = getFirestore(app);
 
+// Helper to chunk large arrays into smaller blocks to prevent Firestore 500 document limits
+const chunkArray = <T,>(arr: T[], size: number): T[][] => {
+  const result: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    result.push(arr.slice(i, i + size));
+  }
+  return result;
+};
+
 // Custom Firestore Logger & error catcher wrapper
 enum OperationType {
   CREATE = 'create',
@@ -144,18 +153,18 @@ export const subscribeUserRegistry = (onUpdate: (users: User[]) => void) => {
 };
 
 /**
- * Subscribe to global active locks configuration
+ * Subscribe to global active locks configuration (and potential custom server configs)
  */
-export const subscribeLocks = (onUpdate: (locks: { [key: string]: boolean }) => void) => {
+export const subscribeLocks = (onUpdate: (locks: { [key: string]: boolean }, customFirebaseConfig?: any) => void) => {
   const path = "locks";
   return onSnapshot(
     doc(db, path, "current"),
     (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
-        onUpdate(data.locks || {});
+        onUpdate(data.locks || {}, data.customConfig || null);
       } else {
-        onUpdate({});
+        onUpdate({}, null);
       }
     },
     (error) => {
@@ -179,16 +188,19 @@ export const setFirebasePackage = async (pkg: ExamPackage) => {
 };
 
 /**
- * Set multiple packages in a batch
+ * Set multiple packages in chunks
  */
 export const batchSetFirebasePackages = async (pkgs: ExamPackage[]) => {
   const path = "packages";
   try {
-    const batch = writeBatch(db);
-    pkgs.forEach((pkg) => {
-      batch.set(doc(db, path, pkg.id), pkg);
-    });
-    await batch.commit();
+    const chunks = chunkArray(pkgs, 200);
+    for (const chunk of chunks) {
+      const batch = writeBatch(db);
+      chunk.forEach((pkg) => {
+        batch.set(doc(db, path, pkg.id), pkg);
+      });
+      await batch.commit();
+    }
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);
   }
@@ -219,16 +231,19 @@ export const setFirebaseQuestion = async (q: Question) => {
 };
 
 /**
- * Set multiple questions in a batch
+ * Set multiple questions in chunked batches
  */
 export const batchSetFirebaseQuestions = async (qs: Question[]) => {
   const path = "questions";
   try {
-    const batch = writeBatch(db);
-    qs.forEach((q) => {
-      batch.set(doc(db, path, q.id), q);
-    });
-    await batch.commit();
+    const chunks = chunkArray(qs, 150);
+    for (const chunk of chunks) {
+      const batch = writeBatch(db);
+      chunk.forEach((q) => {
+        batch.set(doc(db, path, q.id), q);
+      });
+      await batch.commit();
+    }
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);
   }
@@ -259,16 +274,19 @@ export const setFirebaseAttempt = async (attempt: StudentAttempt) => {
 };
 
 /**
- * Set multiple attempts / results in batch
+ * Set multiple attempts / results in chunked batches
  */
 export const batchSetFirebaseAttempts = async (attempts: StudentAttempt[]) => {
   const path = "attempts";
   try {
-    const batch = writeBatch(db);
-    attempts.forEach((att) => {
-      batch.set(doc(db, path, att.id), att);
-    });
-    await batch.commit();
+    const chunks = chunkArray(attempts, 200);
+    for (const chunk of chunks) {
+      const batch = writeBatch(db);
+      chunk.forEach((att) => {
+        batch.set(doc(db, path, att.id), att);
+      });
+      await batch.commit();
+    }
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);
   }
@@ -299,16 +317,19 @@ export const setFirebaseUser = async (user: User) => {
 };
 
 /**
- * Set multiple user accounts in batch
+ * Set multiple user accounts in chunked batches
  */
 export const batchSetFirebaseUsers = async (users: User[]) => {
   const path = "userRegistry";
   try {
-    const batch = writeBatch(db);
-    users.forEach((u) => {
-      batch.set(doc(db, path, u.id), u);
-    });
-    await batch.commit();
+    const chunks = chunkArray(users, 200);
+    for (const chunk of chunks) {
+      const batch = writeBatch(db);
+      chunk.forEach((u) => {
+        batch.set(doc(db, path, u.id), u);
+      });
+      await batch.commit();
+    }
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);
   }
@@ -320,8 +341,70 @@ export const batchSetFirebaseUsers = async (users: User[]) => {
 export const setFirebaseLocks = async (locks: { [key: string]: boolean }) => {
   const path = "locks";
   try {
-    await setDoc(doc(db, path, "current"), { id: "current", locks });
+    // Preserve customConfig if any exists
+    const tempApp = initializeApp(activeConfig, "tempPreserveLocksApp");
+    const tempDb = getFirestore(tempApp);
+    const docRef = doc(tempDb, path, "current");
+    
+    await setDoc(doc(db, path, "current"), { id: "current", locks }, { merge: true });
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, `${path}/current`);
+  }
+};
+
+/**
+ * Synchronize custom Firebase configuration to default database's locks/current
+ */
+import { getFirestore as getFirestoreRaw, doc as docRaw, setDoc as setDocRaw, getDoc as getDocRaw } from "firebase/firestore";
+import { initializeApp as initializeAppRaw } from "firebase/app";
+
+export const saveCustomFirebaseToDefault = async (customConfig: any) => {
+  try {
+    const tempDefaultApp = initializeAppRaw(firebaseConfig, "tempDefaultSyncApp_" + Date.now());
+    const tempDefaultDb = getFirestoreRaw(tempDefaultApp);
+    
+    const docRef = docRaw(tempDefaultDb, "locks", "current");
+    const docSnap = await getDocRaw(docRef);
+    
+    let currentLocks = {};
+    if (docSnap.exists()) {
+      currentLocks = docSnap.data().locks || {};
+    }
+    
+    await setDocRaw(docRef, {
+      id: "current",
+      locks: currentLocks,
+      customConfig: customConfig
+    });
+    console.log("Successfully synchronized custom Firebase config to locks/current in default database.");
+  } catch (error) {
+    console.error("Failed to synchronize custom Firebase configuration to default database:", error);
+  }
+};
+
+/**
+ * Clear custom Firebase configuration from default database's locks/current
+ */
+export const clearCustomFirebaseFromDefault = async () => {
+  try {
+    const tempDefaultApp = initializeAppRaw(firebaseConfig, "tempDefaultClearApp_" + Date.now());
+    const tempDefaultDb = getFirestoreRaw(tempDefaultApp);
+    
+    const docRef = docRaw(tempDefaultDb, "locks", "current");
+    const docSnap = await getDocRaw(docRef);
+    
+    let currentLocks = {};
+    if (docSnap.exists()) {
+      currentLocks = docSnap.data().locks || {};
+    }
+    
+    await setDocRaw(docRef, {
+      id: "current",
+      locks: currentLocks,
+      customConfig: null
+    });
+    console.log("Successfully cleared custom Firebase config from locks/current in default database.");
+  } catch (error) {
+    console.error("Failed to clear custom Firebase config from default database:", error);
   }
 };

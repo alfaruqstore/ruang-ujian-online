@@ -21,7 +21,9 @@ import {
   subscribeAttempts, 
   subscribeUserRegistry, 
   subscribeLocks,
-  setFirebaseLocks
+  setFirebaseLocks,
+  saveCustomFirebaseToDefault,
+  clearCustomFirebaseFromDefault
 } from "../lib/firebaseStore";
 
 export const getPackageColorStyles = (index: number) => {
@@ -750,7 +752,7 @@ JAWABAN : D`
     }
   };
 
-  const handleSaveCustomFirebase = () => {
+  const handleSaveCustomFirebase = async () => {
     try {
       let cleaned = customFirebaseJson.trim();
       if (!cleaned) {
@@ -804,18 +806,24 @@ JAWABAN : D`
         return;
       }
 
+      // Centrally synchronize the custom Firebase config to the default database locks
+      await saveCustomFirebaseToDefault(parsed);
+
       localStorage.setItem("KATA_KITA_CUSTOM_FIREBASE_CONFIG", JSON.stringify(parsed));
-      alert("Konfigurasi Firebase kustom berhasil disimpan! Halaman akan otomatis dimuat ulang untuk menerapkan konfigurasi baru.");
+      alert("Konfigurasi Firebase kustom berhasil disimpan secara global! Seluruh perangkat siswa/admin yang terhubung akan menyinkronkan data secara otomatis dalam 2 detik.");
       window.location.reload();
     } catch (e: any) {
       alert("Gagal menyimpan: Format tidak valid! Pastikan Anda menyalin seluruh object konfigurasi Firebase Anda dengan benar.");
     }
   };
 
-  const handleResetCustomFirebase = () => {
-    if (confirm("Apakah Anda yakin ingin mematikan Firebase Kustom dan kembali menggunakan konfigurasi sistem bawaan Bimbel Kata Kita?")) {
+  const handleResetCustomFirebase = async () => {
+    if (confirm("Apakah Anda yakin ingin mematikan Firebase Kustom dan kembali menggunakan konfigurasi sistem bawaan Bimbel Kata Kita secara global?")) {
+      // Centrally clear the custom config from the default database
+      await clearCustomFirebaseFromDefault();
+
       localStorage.removeItem("KATA_KITA_CUSTOM_FIREBASE_CONFIG");
-      alert("Kembali ke Sistem Bawaan Sukses! Halaman akan dimuat ulang.");
+      alert("Kembali ke Sistem Bawaan Sukses secara global! Seluruh perangkat yang terhubung akan dimuat ulang kembali ke server default.");
       window.location.reload();
     }
   };
@@ -1487,14 +1495,16 @@ JAWABAN : D`
     setErrorMsg("");
     setSuccessMsg("");
     
-    // Reload database from local storage
-    loadDatabaseState();
-    
+    // Clear static local caches to ensure we query completely fresh from live Firebase subscription
+    localStorage.removeItem("KATA_KITA_PACKAGES");
+    localStorage.removeItem("KATA_KITA_QUESTIONS");
+    localStorage.removeItem("KATA_KITA_LOCKS");
+    localStorage.removeItem("KATA_KITA_USER_REGISTRY");
+    localStorage.removeItem("KATA_KITA_ATTEMPTS");
+
     setTimeout(() => {
-      setIsRefreshingMenu(false);
-      setShowRefreshToast(true);
-      setTimeout(() => setShowRefreshToast(false), 2000);
-    }, 800);
+      window.location.reload();
+    }, 500);
   };
 
   const loadDatabaseState = () => {
@@ -1512,18 +1522,27 @@ JAWABAN : D`
       setLocks(defaultLocks);
     }
 
-    const stPkg = localStorage.getItem("KATA_KITA_PACKAGES");
-    if (stPkg) {
-      setPackages(JSON.parse(stPkg));
-    } else {
+    // Prioritize premium live props over local database cache
+    if (initialPackages && initialPackages.length > 0) {
       setPackages(initialPackages);
+    } else {
+      const stPkg = localStorage.getItem("KATA_KITA_PACKAGES");
+      if (stPkg) {
+        setPackages(JSON.parse(stPkg));
+      } else {
+        setPackages(initialPackages);
+      }
     }
 
-    const stQst = localStorage.getItem("KATA_KITA_QUESTIONS");
-    if (stQst) {
-      setQuestions(JSON.parse(stQst));
-    } else {
+    if (initialQuestions && initialQuestions.length > 0) {
       setQuestions(initialQuestions);
+    } else {
+      const stQst = localStorage.getItem("KATA_KITA_QUESTIONS");
+      if (stQst) {
+        setQuestions(JSON.parse(stQst));
+      } else {
+        setQuestions(initialQuestions);
+      }
     }
 
     const registryRaw = localStorage.getItem("KATA_KITA_USER_REGISTRY");
