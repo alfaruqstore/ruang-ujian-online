@@ -10,7 +10,7 @@ import AdminDashboard from "./components/AdminDashboard";
 import StudentDashboard from "./components/StudentDashboard";
 import ExamEngine from "./components/ExamEngine";
 import { DEFAULT_PACKAGES, INITIAL_QUESTIONS } from "./data/initialData";
-import { ExamPackage, Question, StudentAttempt, StudentAnswers, User, APP_THEMES } from "./types";
+import { ExamPackage, Question, StudentAttempt, StudentAnswers, User, APP_THEMES, sortPackages } from "./types";
 import { 
   subscribePackages, 
   subscribeQuestions, 
@@ -172,8 +172,9 @@ export default function App() {
       if (pkgs.length === 0) {
         batchSetFirebasePackages(DEFAULT_PACKAGES);
       } else {
-        setPackages(pkgs);
-        localStorage.setItem("KATA_KITA_PACKAGES", JSON.stringify(pkgs));
+        const sorted = sortPackages(pkgs);
+        setPackages(sorted);
+        localStorage.setItem("KATA_KITA_PACKAGES", JSON.stringify(sorted));
       }
       loadedPkgs = true;
       checkReady();
@@ -257,9 +258,10 @@ export default function App() {
 
   // Sync state modifications directly to centralized Firestore and isomorphic LocalStorage
   const savePackagesToDb = (updated: ExamPackage[]) => {
-    localStorage.setItem("KATA_KITA_PACKAGES", JSON.stringify(updated));
-    setPackages(updated);
-    batchSetFirebasePackages(updated);
+    const sorted = sortPackages(updated);
+    localStorage.setItem("KATA_KITA_PACKAGES", JSON.stringify(sorted));
+    setPackages(sorted);
+    batchSetFirebasePackages(sorted);
   };
 
   const saveQuestionsToDb = (updated: Question[]) => {

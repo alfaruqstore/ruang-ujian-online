@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { ExamPackage, Question, StudentAttempt, User, APP_THEMES } from "../types";
+import { ExamPackage, Question, StudentAttempt, User, APP_THEMES, sortPackages } from "../types";
 import { 
   initSheetsAuth, 
   signInWithGoogleSheets, 
@@ -155,8 +155,9 @@ export default function StudentDashboard({
     rotateQuote();
 
     const unsubPkgs = subscribePackages((pkgs) => {
-      setPackages(pkgs);
-      localStorage.setItem("KATA_KITA_PACKAGES", JSON.stringify(pkgs));
+      const sorted = sortPackages(pkgs);
+      setPackages(sorted);
+      localStorage.setItem("KATA_KITA_PACKAGES", JSON.stringify(sorted));
     });
 
     const unsubQs = subscribeQuestions((qs) => {
@@ -278,20 +279,20 @@ export default function StudentDashboard({
 
   const loadDatabaseState = () => {
     // Sync packages, questions, attempts, and locks
-    let currentPkgs = initialPackages;
+    let currentPkgs = sortedLocalPackages();
     
-    // Prioritize premium live props over local database cache
-    if (initialPackages && initialPackages.length > 0) {
-      setPackages(initialPackages);
-    } else {
+    function sortedLocalPackages() {
+      if (initialPackages && initialPackages.length > 0) {
+        return sortPackages(initialPackages);
+      }
       const stPkg = localStorage.getItem("KATA_KITA_PACKAGES");
       if (stPkg) {
-        currentPkgs = JSON.parse(stPkg);
-        setPackages(currentPkgs);
-      } else {
-        setPackages(initialPackages);
+        return sortPackages(JSON.parse(stPkg));
       }
+      return sortPackages(initialPackages || []);
     }
+
+    setPackages(currentPkgs);
 
     if (initialQuestions && initialQuestions.length > 0) {
       setQuestions(initialQuestions);
@@ -323,11 +324,11 @@ export default function StudentDashboard({
     } else {
       // Default initial locks
       const defaultLocks: { [key: string]: boolean } = {
-        "EXM-MAT": true,
-        "EXM-AN": true,
-        "EXM-LAINNYA": true,
-        "Aljabar & Teori Bilangan": true,
-        "Listening Comprehension (Simul.)": true
+        "EXM-MAT": false,
+        "EXM-AN": false,
+        "EXM-LAINNYA": false,
+        "Aljabar & Teori Bilangan": false,
+        "Listening Comprehension (Simul.)": false
       };
       localStorage.setItem("KATA_KITA_LOCKS", JSON.stringify(defaultLocks));
       setLocks(defaultLocks);
@@ -887,7 +888,7 @@ export default function StudentDashboard({
                         const isAllSubExamsCompleted = pkg.subExams.every(
                           sub => attempts.some(att => att.examId === pkg.id && att.subExamName === sub.name && att.status === "SUBMITTED")
                         );
-                        const isPkgLocked = locks[pkg.id] === true || isAllSubExamsCompleted;
+                        const isPkgLocked = locks[pkg.id] === false || isAllSubExamsCompleted;
                         // Determine custom background gradient from color map or solid premium default
                         const bgGrad = packageColorMap[pkg.id] || "from-slate-800 via-[#103D67] to-[#0A2640]";
                         
@@ -966,7 +967,7 @@ export default function StudentDashboard({
                           sub => attempts.some(att => att.examId === selectedPkgForSubExams.id && att.subExamName === sub.name && att.status === "SUBMITTED")
                         );
                         if (isAllCompleted) {
-                          const updatedLocks = { ...locks, [selectedPkgForSubExams.id]: true };
+                          const updatedLocks = { ...locks, [selectedPkgForSubExams.id]: false };
                           localStorage.setItem("KATA_KITA_LOCKS", JSON.stringify(updatedLocks));
                           setLocks(updatedLocks);
                           setFirebaseLocks(updatedLocks);
@@ -1032,7 +1033,7 @@ export default function StudentDashboard({
                         const isSubCompleted = attempts.some(
                           att => att.examId === selectedPkgForSubExams.id && att.subExamName === sub.name && att.status === "SUBMITTED"
                         );
-                        const isSubLockedInDb = locks[sub.name] === true || locks[selectedPkgForSubExams.id] === true;
+                        const isSubLockedInDb = locks[sub.name] === false || locks[selectedPkgForSubExams.id] === false;
 
                         // Calculate number of questions for this sub-exam (only published ones)
                         const subQs = questions.filter(
@@ -1101,7 +1102,7 @@ export default function StudentDashboard({
 
           {activeTab === "analisa" && (
             <div className="space-y-8">
-              {locks["ANALISA_PEMBAHASAN"] === true ? (
+              {locks["ANALISA_PEMBAHASAN"] === false ? (
                 <div className="bg-white p-12 text-center rounded-2xl border border-slate-200 shadow-sm max-w-xl mx-auto space-y-5 animate-fade-in my-6">
                   <div className="w-16 h-16 rounded-full bg-red-50 text-red-650 flex items-center justify-center text-3xl mx-auto border border-red-100 shadow-inner">
                     <i className="fa-solid fa-user-lock"></i>

@@ -133,3 +133,33 @@ export const APP_THEMES: AppTheme[] = [
     bgGradient: "from-[#991B1B] to-[#7F1D1D]"
   }
 ];
+
+export function sortPackages(pkgs: ExamPackage[]): ExamPackage[] {
+  const order = [
+    "EXM-UTBK",
+    "EXM-KEDINASAN",
+    "EXM-CPNS",
+    "EXM-TNIPOLRI",
+    "EXM-BUMN",
+    "EXM-PPPK",
+    "EXM-PSIKOTES",
+    "EXM-TKA",
+    "EXM-BING",
+    "EXM-MAT",
+    "EXM-AN",
+    "EXM-LAINNYA"
+  ];
+  return [...pkgs].sort((a, b) => {
+    const idxA = order.indexOf(a.id);
+    const idxB = order.indexOf(b.id);
+    
+    if (idxA !== -1 && idxB !== -1) {
+      return idxA - idxB;
+    }
+    if (idxA !== -1) return -1;
+    if (idxB !== -1) return 1;
+    
+    return a.id.localeCompare(b.id);
+  });
+}
+
